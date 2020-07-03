@@ -9,21 +9,17 @@ using System.Windows.Data;
 namespace LayUp.Common
 {
 
-    class IntToBoolConverter : IValueConverter
+    class IntToStringConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
            int? a = (value as int?);
-            if (a == 1)
+            if (a==null)
             {
-                return true;
+                return "--";
             }
-            else
-            {
-                return false;
-            }
-
-
+            return a.ToString();
+          
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

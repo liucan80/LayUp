@@ -1,4 +1,5 @@
-﻿using System;
+﻿using GalaSoft.MvvmLight.Messaging;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -12,6 +13,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using System.Windows.Threading;
 
 namespace LayUp
 {
@@ -20,17 +22,38 @@ namespace LayUp
     /// </summary>
     public partial class MainWindow : Window
     {
+        private readonly DispatcherTimer DispatcherTimer2;
+        private string _currentTime;
         public MainWindow()
         {
             InitializeComponent();
+            Messenger.Default.Register<NotificationMessage>(this, NotificationMessageReceived);
+            //初始化定时器，显示当前时间
+            DispatcherTimer2 = new DispatcherTimer();
+            DispatcherTimer2.Interval = new System.TimeSpan(500);
+            DispatcherTimer2.Tick += GetCurrentTime;
+            DispatcherTimer2.Start();
+            //获取软件版本号
+          txtAssemblyVersion.Text=  System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString();
         }
 
-        private void textBox_TextChanged(object sender, TextChangedEventArgs e)
+        private void GetCurrentTime(object sender, EventArgs e)
         {
-            FrmPLC frmPLC = new FrmPLC();
-            int a = 1;
-         a =  frmPLC.axActUtlType1.Open();
-            Debug.WriteLine(a.ToString());
+            _currentTime = System.DateTime.Now.ToString();
+            TxtCurrentTime .Text= _currentTime;
+        }
+        private void NotificationMessageReceived(NotificationMessage msg)
+        {
+            if (msg.Notification == "ShowView2")
+            {
+                var view2 = new Views.SettingWindow();
+                view2.ShowDialog();
+            }
+        }
+
+        private void Button_Click(object sender, RoutedEventArgs e)
+        {
+            System.Windows.Forms.MessageBox.Show("Test");
         }
     }
 }

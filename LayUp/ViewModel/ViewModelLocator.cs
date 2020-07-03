@@ -44,6 +44,7 @@ namespace LayUp.ViewModel
             ////}
 
             SimpleIoc.Default.Register<MainViewModel>();
+            SimpleIoc.Default.Register<TestUI>();
         }
 
         public MainViewModel Main
@@ -51,6 +52,13 @@ namespace LayUp.ViewModel
             get
             {
                 return ServiceLocator.Current.GetInstance<MainViewModel>();
+            }
+        }
+        public TestUI TestUI1
+        {
+            get
+            {
+                return ServiceLocator.Current.GetInstance<TestUI>();
             }
         }
         

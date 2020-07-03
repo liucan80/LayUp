@@ -8,28 +8,16 @@ using System.Windows.Data;
 
 namespace LayUp.Common
 {
-
-    class IntToBoolConverter : IValueConverter
+    class ReverseBoolConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-           int? a = (value as int?);
-            if (a == 1)
-            {
-                return true;
-            }
-            else
-            {
-                return false;
-            }
-
-
+           throw new NotImplementedException();
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            return null;
-            //throw new NotImplementedException();
+            throw new NotImplementedException();
         }
     }
 }

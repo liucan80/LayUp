@@ -5,16 +5,627 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:LayUp"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800" WindowStyle="SingleBorderWindow"
+        Title="MainWindow" Height="768" Width="1024" WindowStyle="SingleBorderWindow"
         xmlns:Common="clr-namespace:LayUp.Common"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+
         DataContext="{Binding Main,Source={StaticResource Locator}}"
         >
     <Window.Resources>
-        <Common:IntToBoolConverter x:Key="IntToBoolConverter"/>
+        <Common:IntToBoolConverter x:Key="IntToBoolConverter1"/>
+        <Common:IntToBoolConverter x:Key="IntToBoolConverter2"/>
+        <Common:IntToColorConverter x:Key="IntToColorConverter1"/>
+        <Common:BoolToStringConverter x:Key="BoolToStringConverter1"/>
+        <Common:IntToStringConverter x:Key="IntToStringConverter1"/>
+        <Common:MutilValueConverter x:Key="MutilValueConverter1"/>
+
+        <!--输入信号显示样式-->
+        <Style x:Key="TextBox1" TargetType="{x:Type TextBox}" >
+            <Style.Triggers>
+                <Trigger Property="IsEnabled" Value="False" >
+                    <Setter Property="Background" Value="White"  />
+                </Trigger>
+            </Style.Triggers>
+
+            <Setter Property="IsReadOnly" Value="True"/>
+            <Setter Property="IsHitTestVisible" Value="False"/>
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="BorderThickness" Value="1.2"/>
+            <Setter Property="Margin" Value="5,2,5,2"/>
+            <Setter Property="FontSize" Value="14"/>
+        </Style>
+        <Style x:Key="ButtonInput1" TargetType="{x:Type Button}" >
+
+
+            <Setter Property="IsHitTestVisible" Value="False"/>
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="BorderThickness" Value="1.2"/>
+            <Setter Property="Margin" Value="5,2,5,2"/>
+            <Setter Property="FontSize" Value="14"/>
+        </Style>
+
+        <Style x:Key="LabelInputStyle" TargetType="Label">
+            <Setter Property="Margin" Value="5,2,5,2"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Control.Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Label">
+                        <Grid>
+                            <Rectangle MinWidth="20" Margin="0" Stroke="#FFABADB3" StrokeThickness="1" ></Rectangle>
+                            <ContentPresenter Margin="2,0,2,0" HorizontalAlignment="{TemplateBinding HorizontalAlignment}" VerticalAlignment="{TemplateBinding VerticalAlignment}" RecognizesAccessKey="True"  />
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <!--输出信号显示样式-->
+        <Style x:Key="ButtonOutputStyle" TargetType="Button">
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="Margin" Value="5,2,5,2"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Command" Value="{Binding SwitchOutputCommand}"/>
+
+        </Style>
+        <ControlTemplate  x:Key="ButtonInputTemplate1" TargetType="{x:Type ButtonBase}">
+            <Border x:Name="border" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" Background="{TemplateBinding Background}" SnapsToDevicePixels="True">
+                <ContentPresenter x:Name="contentPresenter" ContentTemplate="{TemplateBinding ContentTemplate}" Content="{TemplateBinding Content}" ContentStringFormat="{TemplateBinding ContentStringFormat}" Focusable="False" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" Margin="{TemplateBinding Padding}" RecognizesAccessKey="True" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+            </Border>
+
+            <ControlTemplate.Triggers>
+                <Trigger Property="Button.IsDefaulted" Value="True">
+                    <Setter Property="BorderBrush" TargetName="border" Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}"/>
+                </Trigger>
+                <!--<Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" TargetName="border" Value="#FFE41E1E"/>
+                    <Setter Property="BorderBrush" TargetName="border" Value="#FF3C7FB1"/>
+                </Trigger>-->
+                <!--<Trigger Property="IsPressed" Value="True">
+                    <Setter Property="Background" TargetName="border" Value="#FFC4E5F6"/>
+                    <Setter Property="BorderBrush" TargetName="border" Value="#FF2C628B"/>
+                </Trigger>-->
+                <!--<Trigger Property="ToggleButton.IsChecked" Value="True">
+                    <Setter Property="Background" TargetName="border" Value="#FFBCDDEE"/>
+                    <Setter Property="BorderBrush" TargetName="border" Value="#FF245A83"/>
+                </Trigger>-->
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="Background" TargetName="border" Value="#FFF4F4F4"/>
+                    <Setter Property="BorderBrush" TargetName="border" Value="#FFADB2B5"/>
+                    <Setter Property="Foreground" Value="#FF838383"/>
+                </Trigger>
+            </ControlTemplate.Triggers>
+        </ControlTemplate>
+        <ControlTemplate  x:Key="ButtonOutputTemplate1" TargetType="{x:Type ButtonBase}">
+            <Border x:Name="border" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" Background="{TemplateBinding Background}" SnapsToDevicePixels="True">
+                <ContentPresenter x:Name="contentPresenter" ContentTemplate="{TemplateBinding ContentTemplate}" Content="{TemplateBinding Content}" ContentStringFormat="{TemplateBinding ContentStringFormat}" Focusable="False" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" Margin="{TemplateBinding Padding}" RecognizesAccessKey="True" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+            </Border>
+
+
+            <ControlTemplate.Triggers>
+                <Trigger Property="Button.IsDefaulted" Value="True">
+                    <Setter Property="BorderBrush" TargetName="border" Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}"/>
+                </Trigger>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <!--<Setter Property="Background" TargetName="border" Value="#FFE41E1E"/>-->
+                    <Setter Property="BorderThickness" TargetName="border" Value="3"/>
+                    <Setter Property="BorderBrush" TargetName="border" Value="#FF3C7FB1"/>
+
+                </Trigger>
+                <!--<Trigger Property="IsPressed" Value="True">
+                    <Setter Property="Background" TargetName="border" Value="#FFC4E5F6"/>
+                    <Setter Property="BorderBrush" TargetName="border" Value="#FF2C628B"/>
+                </Trigger>-->
+                <!--<Trigger Property="ToggleButton.IsChecked" Value="True">
+                    <Setter Property="Background" TargetName="border" Value="#FFBCDDEE"/>
+                    <Setter Property="BorderBrush" TargetName="border" Value="#FF245A83"/>
+                </Trigger>-->
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="Background" TargetName="border" Value="#FFF4F4F4"/>
+                    <Setter Property="BorderBrush" TargetName="border" Value="#FFADB2B5"/>
+                    <Setter Property="Foreground" Value="#FF838383"/>
+                </Trigger>
+            </ControlTemplate.Triggers>
+        </ControlTemplate>
+
     </Window.Resources>
-    <Grid>
-        <TextBox x:Name="textBox" HorizontalAlignment="Left" Height="23" Margin="74,255,0,0" TextWrapping="Wrap"  VerticalAlignment="Top" Width="120"  Text="{Binding LayupPLC.Input000}"/>
-        <CheckBox IsChecked="{Binding Path=LayupPLC.Input000, Converter={StaticResource IntToBoolConverter}}" Content="X000" Margin="75,25,653.6,357"></CheckBox>
-        <Button Content="dianji" Margin="108,65,578.6,309" Command="{Binding ConnectCommand}"></Button>
-    </Grid>
+    <DockPanel >
+        <!--菜单栏-->
+        <Grid DockPanel.Dock="Top" Height="30">
+            <Menu Height="25">
+                <MenuItem Header="{DynamicResource iconTraySettings}">
+                    <MenuItem Header="{DynamicResource language}">
+                        <MenuItem Header="中文" Command="{Binding SwitchLangugeCommand}" CommandParameter="zh-cn"/>
+                        <MenuItem Header="English" Command="{Binding SwitchLangugeCommand}" CommandParameter="en"></MenuItem>
+
+                    </MenuItem>
+                    <MenuItem Header="设备设置"  Command="{Binding ShowView2Command}"></MenuItem>
+                    <MenuItem Header="报警自定义"></MenuItem>
+                </MenuItem>
+            </Menu>
+        </Grid>
+        <!--状态栏-->
+        <StatusBar DockPanel.Dock="Bottom" Height="30">
+            <StatusBar.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="150" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="150" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="150" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="150" />
+                        </Grid.ColumnDefinitions>
+                    </Grid>
+                </ItemsPanelTemplate>
+            </StatusBar.ItemsPanel>
+            <StatusBarItem Grid.Column="0" >
+                <StackPanel Orientation="Horizontal" >
+                    <TextBlock Text="返回码:"></TextBlock>
+                    <TextBlock Text="{Binding LayupPLC.RetrunCode, Mode=OneWay}" />
+                </StackPanel>
+               
+            </StatusBarItem>
+            <Separator Grid.Column="1" />
+            <StatusBarItem Grid.Column="2" >
+            
+                <!--通过使用Buttong的控件模板，使StatusBarItem可以单击-->
+                    <Button Click="Button_Click"  >
+                        <Button.Template>
+                            <ControlTemplate TargetType="{x:Type Button}">
+                                <StackPanel Orientation="Horizontal" MinHeight="30" MinWidth="120" VerticalAlignment="Center">
+                                    <TextBlock Text="当前错误:" VerticalAlignment="Center"></TextBlock>
+                                    <TextBlock Foreground="Red" VerticalAlignment="Center" Name="lblCursorPosition" Text="{Binding  LayupPLC.ErrorCode}" />
+                                </StackPanel>
+                            </ControlTemplate>
+                        </Button.Template>
+                    </Button>
+                  
+           
+              
+            </StatusBarItem>
+            <Separator Grid.Column="3" />
+            <StatusBarItem Grid.Column="4">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="连接状态:"></TextBlock>
+                    <TextBlock  Name="lblCursorPosition1" Text="{Binding LayupPLC.IsConnected, Converter={StaticResource BoolToStringConverter1}}" />
+                </StackPanel>
+
+            </StatusBarItem>
+
+            <Separator Grid.Column="5" />
+            <StatusBarItem Grid.Column="6">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="版本:"></TextBlock>
+                    <TextBlock Text="1.00" Name="txtAssemblyVersion"></TextBlock>
+                </StackPanel>
+            </StatusBarItem>
+            <Separator Grid.Column="7"></Separator>
+            <StatusBarItem Grid.Column="8">
+                <TextBlock Name="TxtCurrentTime"  HorizontalAlignment="Center"  Height="16" />
+            </StatusBarItem>
+        </StatusBar>
+        <!--显示区-->
+        <Grid DockPanel.Dock="Top" >
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="4*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <!--#region 主显示区-->
+            <Grid Grid.Column="0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="3*"/>
+                    <RowDefinition Height="5*"/>
+                </Grid.RowDefinitions>
+                <!--图形显示区-->
+                <GroupBox Header="进玻璃位图示" Margin="0,0,0,0">
+                    <Canvas Margin="0,0,0,0"  >
+                        <Rectangle Fill="#FF2BE22B" Width="600" Height="20" Panel.ZIndex="2" Canvas.Left="13" Canvas.Top="13"/>
+                        <Rectangle Fill="#FF2BE22B" Width="600" Height="20" Panel.ZIndex="2" RenderTransformOrigin="0.497,-1.842" Canvas.Left="15" Canvas.Top="166"/>
+                        <Rectangle  StrokeThickness="1" Stroke="Black" Height="186" Width="8" Canvas.Left="29" Panel.ZIndex="1" Canvas.Top="8"/>
+                        <Rectangle  StrokeThickness="1" Stroke="Black" Height="8" Width="440" Canvas.Left="130" Panel.ZIndex="1" Canvas.Top="130"/>
+                        <Grid Width="30" Height="30" Canvas.Left="18"  Canvas.Top="194" Panel.ZIndex="2">
+
+                            <Ellipse Width="30" Height="30" Stroke="Black"  Grid.ColumnSpan="2"/>
+                            <TextBlock Text="M" IsEnabled="{Binding LayupPLC.IsConnected}" Background="{Binding LayupPLC.Output004, Converter={StaticResource IntToColorConverter1}}" VerticalAlignment="Center" HorizontalAlignment="Center" Grid.ColumnSpan="2" Margin="-3.019,7.38"></TextBlock>
+                            <Ellipse Width="30" Height="30" Stroke="Black"/>
+                        </Grid>
+                        <Rectangle Fill="#FF2BE22B" Height="105" Panel.ZIndex="2" Canvas.Left="130" Canvas.Top="45" Width="24"/>
+                        <Rectangle Fill="#FF2BE22B" Height="105" Panel.ZIndex="2" Canvas.Left="330" Canvas.Top="44.6" Width="24"/>
+                        <Rectangle Fill="#FF2BE22B" Height="105" Panel.ZIndex="2" Canvas.Left="530" Canvas.Top="46" Width="24"/>
+                        <TextBox Text="(X010)" FontSize="16" IsEnabled="{Binding LayupPLC.IsConnected}" Background="{Binding LayupPLC.Input010, Converter={StaticResource IntToColorConverter1}}" IsHitTestVisible="False" IsReadOnly="True" BorderBrush="Black" Height="24" Canvas.Left="160" TextWrapping="Wrap"  Canvas.Top="78" Width="56"/>
+                        <TextBox Text="(X011)" FontSize="16" IsEnabled="{Binding LayupPLC.IsConnected}" Background="{Binding LayupPLC.Input011, Converter={StaticResource IntToColorConverter1}}" IsHitTestVisible="False" IsReadOnly="True" BorderBrush="Black" Height="24" Canvas.Left="49" TextWrapping="Wrap"  Canvas.Top="35" Width="56" />
+                        <TextBox Text="(X012)" FontSize="16" IsEnabled="{Binding LayupPLC.IsConnected}" Background="{Binding LayupPLC.Input012, Converter={StaticResource IntToColorConverter1}}" IsHitTestVisible="False" IsReadOnly="True" BorderBrush="Black" Height="24" Canvas.Left="360" TextWrapping="Wrap"  Canvas.Top="47" Width="56" />
+                        <TextBox Text="(X013)" FontSize="16" IsEnabled="{Binding LayupPLC.IsConnected}" Background="{Binding LayupPLC.Input013, Converter={StaticResource IntToColorConverter1}}" IsHitTestVisible="False" IsReadOnly="True" BorderBrush="Black" Height="24" Canvas.Left="360" TextWrapping="Wrap"  Canvas.Top="130" Panel.ZIndex="4" Width="56" />
+                        <TextBox Text="(X024)" FontSize="16" IsEnabled="{Binding LayupPLC.IsConnected}" Background="{Binding LayupPLC.Input024, Converter={StaticResource IntToColorConverter1}}" IsHitTestVisible="False" IsReadOnly="True" BorderBrush="Black" Height="24" Canvas.Left="560" TextWrapping="Wrap"  Canvas.Top="39" Width="56" />
+                        <Grid Width="30" Height="30" Canvas.Left="100"  Canvas.Top="119" Panel.ZIndex="2">
+                            <Ellipse Width="30" Height="30" Stroke="Black"  Grid.ColumnSpan="2"/>
+                            <TextBlock Text="M" IsEnabled="{Binding LayupPLC.IsConnected}" Background="{Binding LayupPLC.Output005, Converter={StaticResource IntToColorConverter1}}" VerticalAlignment="Center" HorizontalAlignment="Center" Grid.ColumnSpan="2" Margin="-3.019,7.38"/>
+                            <Ellipse Width="30" Height="30" Stroke="Black"/>
+                        </Grid>
+                        <Grid Width="30" Height="30" Canvas.Left="300"  Canvas.Top="83" Panel.ZIndex="2">
+                            <Ellipse Width="30" Height="30" Stroke="Black"  Grid.ColumnSpan="2"/>
+                            <TextBlock Text="CY" IsEnabled="{Binding LayupPLC.IsConnected}" Background="{Binding LayupPLC.Output012, Converter={StaticResource IntToColorConverter1}}" VerticalAlignment="Center" HorizontalAlignment="Center" Grid.ColumnSpan="2" Margin="-3.019,7.38"/>
+                            <Ellipse Width="30" Height="30" Stroke="Black" />
+                        </Grid>
+
+
+                    </Canvas>
+
+                </GroupBox>
+                <Grid Grid.Row="1"  Margin="0,0,-0.4,0" >
+                    <!--输入输出信号显示-->
+                    <GroupBox Header="输入输出信号" Margin="0,0,0,0">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="3*"/>
+                                <RowDefinition Height="5*"/>
+                            </Grid.RowDefinitions>
+                            <!--输入信号显示-->
+                            <GroupBox Header="对接输入信号" Grid.Row="0" Margin="10,0,10,4"  >
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="1*"/>
+                                        <RowDefinition Height="1*"/>
+                                    </Grid.RowDefinitions>
+                                    <StackPanel Grid.Row="0" Orientation="Horizontal" >
+                                        <Button IsEnabled="{Binding LayupPLC.IsConnected}" Template="{StaticResource ButtonInputTemplate1}" Style="{StaticResource ButtonInput1}" Background="{Binding LayupPLC.Input003, Converter={StaticResource IntToColorConverter1}}"  MinWidth="180" >
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="(X003)"/>
+                                                <TextBlock Text="流水线申请进玻璃"/>
+                                            </StackPanel>
+                                        </Button>
+                                        <Button  IsEnabled="{Binding LayupPLC.IsConnected}" Template="{StaticResource ButtonInputTemplate1}" Style="{StaticResource ButtonInput1}" Background="{Binding LayupPLC.Input004, Converter={StaticResource IntToColorConverter1}}" MinWidth="180" >
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="(X004)"/>
+                                                <TextBlock Text="排版机允许进料"/>
+                                            </StackPanel>
+
+                                        </Button>
+                                        <Button  IsEnabled="{Binding LayupPLC.IsConnected}" Template="{StaticResource ButtonInputTemplate1}" Style="{StaticResource ButtonInput1}" Background="{Binding LayupPLC.Input005, Converter={StaticResource IntToColorConverter1}}"  MinWidth="180">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="(X005)"/>
+                                                <TextBlock Text="串联2号排版机允许进入"/>
+                                            </StackPanel>
+
+                                        </Button>
+                                    </StackPanel >
+                                    <StackPanel Grid.Row="1" Orientation="Horizontal" >
+                                        <Button  Style="{StaticResource ButtonInput1}" Template="{StaticResource ButtonInputTemplate1}" IsEnabled="{Binding LayupPLC.IsConnected}"  Background ="{Binding LayupPLC.Input002, Converter={StaticResource IntToColorConverter1}}"  MinWidth="105">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="(X002)"/>
+                                                <TextBlock Text="备用"/>
+                                            </StackPanel>
+                                        </Button>
+                                        <Button Style="{StaticResource ButtonInput1}" Template="{StaticResource ButtonInputTemplate1}" IsEnabled="{Binding LayupPLC.IsConnected}"  Background ="{Binding LayupPLC.Input006, Converter={StaticResource IntToColorConverter1}}"  Width="105">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="(X006)"/>
+                                                <TextBlock Text="备用"/>
+                                            </StackPanel>
+                                        </Button>
+                                        <Button Style="{StaticResource ButtonInput1}" Template="{StaticResource ButtonInputTemplate1}" IsEnabled="{Binding LayupPLC.IsConnected}"  Background ="{Binding LayupPLC.Input007, Converter={StaticResource IntToColorConverter1}}"  Width="105">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="(X007)"/>
+                                                <TextBlock Text="备用"/>
+                                            </StackPanel>
+                                        </Button>
+                                        <Button Style="{StaticResource ButtonInput1}" Template="{StaticResource ButtonInputTemplate1}" IsEnabled="{Binding LayupPLC.IsConnected}"  Background ="{Binding LayupPLC.Input014, Converter={StaticResource IntToColorConverter1}}"  Width="105">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="(X014)"/>
+                                                <TextBlock Text="备用"/>
+                                            </StackPanel>
+                                        </Button>
+                                        <Button Style="{StaticResource ButtonInput1}" Template="{StaticResource ButtonInputTemplate1}" IsEnabled="{Binding LayupPLC.IsConnected}"  Background ="{Binding LayupPLC.Input015, Converter={StaticResource IntToColorConverter1}}"  Width="105">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="(X015)"/>
+                                                <TextBlock Text="备用"/>
+                                            </StackPanel>
+                                        </Button>
+                                    </StackPanel>
+
+
+                                </Grid>
+                            </GroupBox>
+                            <!--输出信号显示-->
+                            <GroupBox Header="输出信号" Grid.Row="1" Margin="10,0,10,4"  >
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition/>
+                                        <RowDefinition/>
+                                        <RowDefinition/>
+                                        <RowDefinition/>
+                                        <RowDefinition/>
+                                    </Grid.RowDefinitions>
+                                    <StackPanel Orientation="Horizontal" Grid.Row="0">
+                                        <Button Style="{StaticResource ButtonOutputStyle}"  CommandParameter="Y000" Template="{StaticResource ButtonOutputTemplate1}" IsEnabled="{Binding LayupPLC.IsConnected}"  Background ="{Binding LayupPLC.Output000, Converter={StaticResource IntToColorConverter1}}"  MinWidth="180"  >
+                                            <StackPanel Orientation="Horizontal" Margin="5,0,5,0"  >
+                                                <TextBlock Text="(Y000)" ></TextBlock>
+                                                <TextBlock Text="允许流水线进玻璃"/>
+                                            </StackPanel>
+                                        </Button>
+                                        <Button Style="{StaticResource ButtonOutputStyle}" CommandParameter="Y001" Template="{StaticResource ButtonOutputTemplate1}" IsEnabled="{Binding LayupPLC.IsConnected}"  Background ="{Binding LayupPLC.Output001, Converter={StaticResource IntToColorConverter1}}"   MinWidth="180"  >
+                                            <StackPanel Orientation="Horizontal" Margin="5,0,5,0"  >
+                                                <TextBlock Text="(Y001)" ></TextBlock>
+                                                <TextBlock Text="玻璃传出申请"/>
+                                            </StackPanel>
+
+                                        </Button>
+                                        <Button Style="{StaticResource ButtonOutputStyle}" CommandParameter="Y002" Template="{StaticResource ButtonOutputTemplate1}" IsEnabled="{Binding LayupPLC.IsConnected}"  Background ="{Binding LayupPLC.Output002, Converter={StaticResource IntToColorConverter1}}"   MinWidth="180"  >
+                                            <StackPanel Orientation="Horizontal" Margin="5,0,5,0"  >
+                                                <TextBlock Text="(Y002)" ></TextBlock>
+                                                <TextBlock Text="向铺设位传玻璃申请"/>
+                                            </StackPanel>
+                                        </Button>
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal" Grid.Row="1">
+                                        <Button Style="{StaticResource ButtonOutputStyle}" CommandParameter="Y004" Template="{StaticResource ButtonOutputTemplate1}" IsEnabled="{Binding LayupPLC.IsConnected}"  Background ="{Binding LayupPLC.Output004, Converter={StaticResource IntToColorConverter1}}" MinWidth="180"   >
+                                            <StackPanel Orientation="Horizontal" Margin="5,0,5,0"  >
+                                                <TextBlock Text="(Y004)" ></TextBlock>
+                                                <TextBlock Text="流水线方向电机"/>
+                                            </StackPanel>
+                                        </Button>
+                                        <Button Style="{StaticResource ButtonOutputStyle}" CommandParameter="Y005" Template="{StaticResource ButtonOutputTemplate1}" IsEnabled="{Binding LayupPLC.IsConnected}"  Background ="{Binding LayupPLC.Output005, Converter={StaticResource IntToColorConverter1}}"    MinWidth="180" >
+                                            <StackPanel Orientation="Horizontal" Margin="5,0,5,0"  >
+                                                <TextBlock Text="(Y005)" ></TextBlock>
+                                                <TextBlock Text="转向电机"/>
+                                            </StackPanel>
+                                        </Button>
+                                        <Button Style="{StaticResource ButtonOutputStyle}" CommandParameter="Y007" Template="{StaticResource ButtonOutputTemplate1}" IsEnabled="{Binding LayupPLC.IsConnected}"  Background ="{Binding LayupPLC.Output007, Converter={StaticResource IntToColorConverter1}}"   MinWidth="180"  >
+                                            <StackPanel Orientation="Horizontal" Margin="5,0,5,0"  >
+                                                <TextBlock Text="(Y007)" ></TextBlock>
+                                                <TextBlock Text="暂存台电机"/>
+                                            </StackPanel>
+                                        </Button>
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal" Grid.Row="2">
+                                        <Button Style="{StaticResource ButtonOutputStyle}" CommandParameter="Y012" Template="{StaticResource ButtonOutputTemplate1}" IsEnabled="{Binding LayupPLC.IsConnected}"  Background ="{Binding LayupPLC.Output012, Converter={StaticResource IntToColorConverter1}}"  MinWidth="180"   >
+
+                                            <StackPanel Orientation="Horizontal" Margin="5,0,5,0"  >
+                                                <TextBlock Text="(Y012)" ></TextBlock>
+                                                <TextBlock Text="电磁阀"/>
+                                            </StackPanel>
+                                        </Button>
+                                        <Button Style="{StaticResource ButtonOutputStyle}" CommandParameter="Y010" Template="{StaticResource ButtonOutputTemplate1}" IsEnabled="{Binding LayupPLC.IsConnected}"  Background ="{Binding LayupPLC.Output010, Converter={StaticResource IntToColorConverter1}}"   MinWidth="180"  >
+
+                                            <StackPanel Orientation="Horizontal" Margin="5,0,5,0"  >
+                                                <TextBlock Text="(Y010)" ></TextBlock>
+                                                <TextBlock Text="停止指示"/>
+                                            </StackPanel>
+                                        </Button>
+                                        <Button Style="{StaticResource ButtonOutputStyle}" CommandParameter="Y011" Template="{StaticResource ButtonOutputTemplate1}" IsEnabled="{Binding LayupPLC.IsConnected}"  Background ="{Binding LayupPLC.Output011, Converter={StaticResource IntToColorConverter1}}"  MinWidth="180"   >
+
+                                            <StackPanel Orientation="Horizontal" Margin="5,0,5,0"  >
+                                                <TextBlock Text="(Y011)" ></TextBlock>
+                                                <TextBlock Text="运行指示"/>
+                                            </StackPanel>
+                                        </Button>
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal" Grid.Row="3">
+                                        <Button Style="{StaticResource ButtonOutputStyle}" CommandParameter="Y003" Template="{StaticResource ButtonOutputTemplate1}" IsEnabled="{Binding LayupPLC.IsConnected}"  Background ="{Binding LayupPLC.Output003, Converter={StaticResource IntToColorConverter1}}" MinWidth="130"   >
+                                            <StackPanel Orientation="Horizontal" Margin="5,0,5,0"  >
+                                                <TextBlock Text="(Y003)" ></TextBlock>
+                                                <TextBlock Text="备用"/>
+                                            </StackPanel>
+                                        </Button>
+                                        <Button Style="{StaticResource ButtonOutputStyle}" CommandParameter="Y006" Template="{StaticResource ButtonOutputTemplate1}" IsEnabled="{Binding LayupPLC.IsConnected}"  Background ="{Binding LayupPLC.Output006, Converter={StaticResource IntToColorConverter1}}"   MinWidth="130"  >
+                                            <StackPanel Orientation="Horizontal" Margin="5,0,5,0"  >
+                                                <TextBlock Text="(Y006)" ></TextBlock>
+                                                <TextBlock Text="备用"/>
+                                            </StackPanel>
+                                        </Button>
+                                        <Button Style="{StaticResource ButtonOutputStyle}" CommandParameter="Y013" Template="{StaticResource ButtonOutputTemplate1}" IsEnabled="{Binding LayupPLC.IsConnected}"  Background ="{Binding LayupPLC.Output013, Converter={StaticResource IntToColorConverter1}}"  MinWidth="130"   >
+                                            <StackPanel Orientation="Horizontal" Margin="5,0,5,0"  >
+                                                <TextBlock Text="(Y013)" ></TextBlock>
+                                                <TextBlock Text="备用"/>
+                                            </StackPanel>
+                                        </Button>
+                                        <Button Style="{StaticResource ButtonOutputStyle}" CommandParameter="Y014" Template="{StaticResource ButtonOutputTemplate1}" IsEnabled="{Binding LayupPLC.IsConnected}"  Background ="{Binding LayupPLC.Output014, Converter={StaticResource IntToColorConverter1}}"  MinWidth="130"   >
+                                            <StackPanel Orientation="Horizontal" Margin="5,0,5,0"  >
+                                                <TextBlock Text="(Y014)" ></TextBlock>
+                                                <TextBlock Text="备用"/>
+                                            </StackPanel>
+                                        </Button>
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal" Grid.Row="4">
+                                        <Button Style="{StaticResource ButtonOutputStyle}" CommandParameter="Y015"  Template="{StaticResource ButtonOutputTemplate1}" IsEnabled="{Binding LayupPLC.IsConnected}"  Background ="{Binding LayupPLC.Output015, Converter={StaticResource IntToColorConverter1}}"  MinWidth="180"  >
+                                            <StackPanel Orientation="Horizontal" Margin="5,0,5,0"  >
+                                                <TextBlock Text="(Y015)" ></TextBlock>
+                                                <TextBlock Text="备用"/>
+                                            </StackPanel>
+                                        </Button>
+                                        <Button Style="{StaticResource ButtonOutputStyle}" CommandParameter="Y016" Template="{StaticResource ButtonOutputTemplate1}" IsEnabled="{Binding LayupPLC.IsConnected}"  Background ="{Binding LayupPLC.Output016, Converter={StaticResource IntToColorConverter1}}"   MinWidth="180" >
+                                            <StackPanel Orientation="Horizontal" Margin="5,0,5,0"  >
+                                                <TextBlock Text="(Y016)" ></TextBlock>
+                                                <TextBlock Text="备用"/>
+                                            </StackPanel>
+                                        </Button>
+                                        <Button Style="{StaticResource ButtonOutputStyle}" CommandParameter="Y017" Template="{StaticResource ButtonOutputTemplate1}" IsEnabled="{Binding LayupPLC.IsConnected}"  Background ="{Binding LayupPLC.Output017, Converter={StaticResource IntToColorConverter1}}"   MinWidth="180" >
+                                            <StackPanel Orientation="Horizontal" Margin="5,0,5,0"  >
+                                                <TextBlock Text="(Y017)" ></TextBlock>
+                                                <TextBlock Text="备用"/>
+                                            </StackPanel>
+                                        </Button>
+
+                                    </StackPanel>
+
+                                </Grid>
+
+
+
+
+
+                            </GroupBox>
+                        </Grid>
+                    </GroupBox>
+
+
+                    <!--<TextBox x:Name="textBox" HorizontalAlignment="Left" Height="23" TextWrapping="Wrap"  VerticalAlignment="Top" Width="120"  Text="{Binding LayupPLC.StationNumber}"/>
+                <CheckBox IsChecked="{Binding Path=LayupPLC.Input000, Converter={StaticResource IntToBoolConverter1}}" Content="X000" ></CheckBox>
+                <Button Content="{Binding Path=LayupPLC.IsConnected, Converter={StaticResource BoolToStringConverter1}}"  Command="{Binding ConnectCommand}" CommandParameter="{Binding LayupPLC.IsConnected ,Mode=TwoWay}"></Button>
+                -->
+                    <!--<ToggleButton Content="Y000" Height="50" Width=" 200" Command="{Binding SwitchOutputCommand}" IsChecked="{Binding Path=LayupPLC.Output000, Mode=OneWayToSource, Converter={StaticResource IntToBoolConverter2}}" CommandParameter="Y000" Margin="471,128,122.6,242"></ToggleButton>-->
+                    <!--<ToggleButton Content="Y000" Height="50" Width=" 200" Command="{Binding SwitchOutputCommand}" IsChecked="True" CommandParameter="Y000" Margin="308,237,285.6,133"></ToggleButton>-->
+                    <!--
+                <Button Content="断开" Command="{Binding StopMonitorCommand}"  ></Button>-->
+                </Grid>
+            </Grid>
+            <!--#endregion-->
+            
+            <!--#region 设置区-->
+            <Grid Grid.Column="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="4*"/>
+                    <RowDefinition Height="3*"/>
+                </Grid.RowDefinitions>
+                <GroupBox Header="参数设置" Grid.Row="0">
+                    <Grid Margin="0,5,0,0"   >
+                        <Grid.RowDefinitions>
+                            <RowDefinition/>
+                            <RowDefinition/>
+                            <RowDefinition/>
+                            <RowDefinition/>
+                            <RowDefinition/>
+                            <RowDefinition/>
+                            <RowDefinition/>
+                            <RowDefinition/>
+                            <RowDefinition/>
+                            <RowDefinition/>
+                            <RowDefinition/>
+                            <RowDefinition/>
+                            <RowDefinition/>
+                            <RowDefinition/>
+                        </Grid.RowDefinitions>
+                        <TextBlock Text="进玻璃到位延时" Grid.Row="0" VerticalAlignment="Center" />
+                        <TextBox x:Name="txtData200" Text="{Binding LayupPLC.Data200, Mode=OneWay, Converter={StaticResource IntToStringConverter1  }}" IsEnabled="{Binding LayupPLC.IsConnected}" HorizontalAlignment="Right" Grid.Row="1" VerticalAlignment="Center" Height="20" MinWidth="80"/>
+                        <TextBlock  Text="进玻璃到位延时" Grid.Row="2" VerticalAlignment="Center" />
+                        <TextBox  x:Name="txtData201" Text="{Binding LayupPLC.Data201, Mode=OneWay, Converter={StaticResource IntToStringConverter1  }}" IsEnabled="{Binding LayupPLC.IsConnected}"  HorizontalAlignment="Right" Grid.Row="3" VerticalAlignment="Center" Height="20" MinWidth="80"/>
+                        <TextBlock Text="进玻璃到位延时" Grid.Row="4" VerticalAlignment="Center" />
+                        <TextBox  x:Name="txtData202" Text="{Binding LayupPLC.Data202, Mode=OneWay, Converter={StaticResource IntToStringConverter1  }}" IsEnabled="{Binding LayupPLC.IsConnected}" HorizontalAlignment="Right" Grid.Row="5" VerticalAlignment="Center" Height="20" MinWidth="80"/>
+                        <TextBlock Text="进玻璃到位延时" Grid.Row="6" VerticalAlignment="Center" />
+                        <TextBox  x:Name="txtData210" Text="{Binding LayupPLC.Data210, Mode=OneWay, Converter={StaticResource IntToStringConverter1  }}" IsEnabled="{Binding LayupPLC.IsConnected}"  HorizontalAlignment="Right" Grid.Row="7" VerticalAlignment="Center" Height="20" MinWidth="80"/>
+                        <TextBlock Text="进玻璃到位延时" Grid.Row="8" VerticalAlignment="Center" />
+                        <TextBox  x:Name="txtData211" Text="{Binding LayupPLC.Data211, Mode=OneWay, Converter={StaticResource IntToStringConverter1  }}" IsEnabled="{Binding LayupPLC.IsConnected}" HorizontalAlignment="Right" Grid.Row="9" VerticalAlignment="Center" Height="20" MinWidth="80"/>
+                        <TextBlock Text="进玻璃到位延时" Grid.Row="10" VerticalAlignment="Center" />
+                        <TextBox  x:Name="txtData212" Text="{Binding LayupPLC.Data212, Mode=OneWay, Converter={StaticResource IntToStringConverter1  }}" IsEnabled="{Binding LayupPLC.IsConnected}" HorizontalAlignment="Right" Grid.Row="11" VerticalAlignment="Center" Height="20" MinWidth="80"/>
+                        <Button Command="{Binding WriteDataCommand}" Content="写入" IsEnabled="{Binding LayupPLC.IsConnected}" Grid.Row="12" Grid.RowSpan="2" Margin="10" >
+                            <Button.CommandParameter>
+                                <MultiBinding Converter="{StaticResource MutilValueConverter1}">
+                                    <Binding Path="Text" ElementName="txtData200"/>
+                                    <Binding Path="Text" ElementName="txtData201"/>
+                                    <Binding Path="Text" ElementName="txtData202"/>
+                                    <Binding Path="Text" ElementName="txtData210"/>
+                                    <Binding Path="Text" ElementName="txtData211"/>
+                                    <Binding Path="Text" ElementName="txtData212"/>
+
+                                </MultiBinding>
+                            </Button.CommandParameter>
+                        </Button>
+                    </Grid>
+                </GroupBox>
+                <GroupBox Header="流水线方向设置" Grid.Row="1">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition/>
+                            <RowDefinition/>
+                            <RowDefinition/>
+                            <RowDefinition/>
+                            <RowDefinition/>
+                        </Grid.RowDefinitions>
+                        <Button Grid.Row="0" Style="{StaticResource ButtonOutputStyle}" CommandParameter="M231" Template="{StaticResource ButtonOutputTemplate1}" IsEnabled="{Binding LayupPLC.IsConnected,Mode=OneWay}"  Background ="{Binding LayupPLC.M231, Converter={StaticResource IntToColorConverter1}}"   MinWidth="120"  >
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,0"  >
+                                <TextBlock Text="(M231)" ></TextBlock>
+                                <TextBlock Text="左进玻璃切换"/>
+                            </StackPanel>
+                        </Button>
+                        <Button Grid.Row="1" Style="{StaticResource ButtonOutputStyle}" CommandParameter="M232" Template="{StaticResource ButtonOutputTemplate1}" IsEnabled="{Binding LayupPLC.IsConnected,Mode=OneWay}"  Background ="{Binding LayupPLC.M232, Converter={StaticResource IntToColorConverter1}}"   MinWidth="120"  >
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,0"  >
+                                <TextBlock Text="" ></TextBlock>
+                                <TextBlock Text="左玻璃切换传出开启"/>
+                            </StackPanel>
+                        </Button>
+                        <Button Grid.Row="2" Style="{StaticResource ButtonOutputStyle}" CommandParameter="M233" Template="{StaticResource ButtonOutputTemplate1}" IsEnabled="{Binding LayupPLC.IsConnected ,Mode=OneWay}"  Background ="{Binding LayupPLC.M233, Converter={StaticResource IntToColorConverter1}}"   MinWidth="120"  >
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,0"  >
+                                <TextBlock Text="(M233)" ></TextBlock>
+                                <TextBlock Text=""/>
+                            </StackPanel>
+                        </Button>
+                        <Button Grid.Row="3" Style="{StaticResource ButtonOutputStyle}" CommandParameter="M234" Template="{StaticResource ButtonOutputTemplate1}" IsEnabled="{Binding LayupPLC.IsConnected, Mode=OneWay}"  Background ="{Binding LayupPLC.M234, Converter={StaticResource IntToColorConverter1}}"   MinWidth="120"  >
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,0"  >
+                                <TextBlock Text="(M234)" ></TextBlock>
+                                <TextBlock Text=""/>
+                            </StackPanel>
+                        </Button>
+                        <Button Grid.Row="4" Style="{StaticResource ButtonOutputStyle}" CommandParameter="M235" Template="{StaticResource ButtonOutputTemplate1}" IsEnabled="{Binding LayupPLC.IsConnected, Mode=OneWay }"  Background ="{Binding LayupPLC.M235, Converter={StaticResource IntToColorConverter1}}"   MinWidth="120"  >
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,0"  >
+                                <TextBlock Text="(M235)" ></TextBlock>
+                                <TextBlock Text=""/>
+                            </StackPanel>
+                        </Button>
+                        <!--<Button MaxHeight="40" Grid.Row="0" Content="左进玻璃切换(M231M)"/>--><!--
+                        <Button MaxHeight="40" Grid.Row="1" Content="左玻璃切换传出开启"/>
+                        <Button MaxHeight="40" Grid.Row="2" Content="(M233M)"/>
+                        <Button MaxHeight="40" Grid.Row="3" Content="(M234M)"/>
+                        <Button MaxHeight="40" Grid.Row="4" Content="(M235M)"/>-->
+
+                    </Grid>
+                </GroupBox>
+            </Grid>
+            <!--#endregion-->
+            <!--侧边栏-->
+            <Grid Grid.Column="2">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="199*"/>
+                    <RowDefinition Height="155*"/>
+                </Grid.RowDefinitions>
+                <StackPanel Margin="0,0,-0.4,0" Grid.RowSpan="2">
+                    <Grid >
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="2*"/>
+                            <ColumnDefinition Width="4*"/>
+                        </Grid.ColumnDefinitions>
+                      
+                        <TextBlock FontSize="15" VerticalAlignment="Center" TextAlignment="Center" Grid.Column="0" Grid.Row="0" Text="连接类型"  ></TextBlock>
+                        <ComboBox Margin="5,0,5,0" HorizontalAlignment="Center" VerticalAlignment="Center"  MinWidth="50"  Grid.Column="1" Grid.Row="0" IsEnabled="{Binding LayupPLC.IsDisConnected}"  FontSize="12" >
+                            <ComboBoxItem Content="MX Component" IsSelected="True"/>
+                            <!--<ComboBoxItem Content="Modbus TCP"/>
+                            <ComboBoxItem Content="OPC"/>-->
+                        </ComboBox>
+                       
+                    </Grid>
+                    <GroupBox Header="PLC信息" Name="GrpPLC"   Content="{Binding TestUI1,Source={StaticResource Locator}}">
+                       
+                    </GroupBox>
+                    <Grid Margin="0,10,0,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition/>
+                            <ColumnDefinition/>
+                        </Grid.ColumnDefinitions>
+                        <Button  Content="连接" Command="{Binding ConnectCommand}" Width="80" Height="29" />
+                        <Button Grid.Column="1" Content="断开连接" Command="{Binding StopMonitorCommand}" Width="80" />
+
+                    </Grid>
+                </StackPanel>
+
+
+
+            </Grid>
+
+
+
+        </Grid>
+
+    </DockPanel>
+
 </Window>

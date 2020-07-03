@@ -9,21 +9,21 @@ using System.Windows.Data;
 namespace LayUp.Common
 {
 
-    class IntToBoolConverter : IValueConverter
+    class IntToColorConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
            int? a = (value as int?);
-            if (a == 1)
+
+           if (a==1)
             {
-                return true;
+                return "green";
             }
             else
             {
-                return false;
+                return "#C5611B";
             }
-
-
+          
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
