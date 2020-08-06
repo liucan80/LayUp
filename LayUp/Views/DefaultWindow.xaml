@@ -1,0 +1,17 @@
+﻿<Window x:Class="LayUp.Views.DefaultWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:LayUp.Views"
+        DataContext="{Binding Path=Main, Source={StaticResource Locator}}"
+        mc:Ignorable="d"
+        Title="DefaultWindow" Height="450" Width="800">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="105*"/>
+            <ColumnDefinition Width="688*"/>
+        </Grid.ColumnDefinitions>
+        <TextBlock Text="{Binding LayupPLC.ConnectionMethod}" Grid.ColumnSpan="2" Margin="0,0,-0.4,0"></TextBlock>
+    </Grid>
+</Window>

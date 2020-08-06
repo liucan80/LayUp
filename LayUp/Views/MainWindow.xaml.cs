@@ -46,7 +46,7 @@ namespace LayUp
         {
             if (msg.Notification == "ShowView2")
             {
-                var view2 = new Views.SettingWindow();
+                var view2 = new Views.SettingView();
                 view2.ShowDialog();
             }
         }
@@ -54,6 +54,13 @@ namespace LayUp
         private void Button_Click(object sender, RoutedEventArgs e)
         {
             System.Windows.Forms.MessageBox.Show("Test");
+        }
+
+        private void ComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            
+            //  var container=ViewModel.ViewModelLocator.
+            
         }
     }
 }

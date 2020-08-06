@@ -7,9 +7,9 @@
         mc:Ignorable="d"
         Title="MainWindow" Height="768" Width="1024" WindowStyle="SingleBorderWindow"
         xmlns:Common="clr-namespace:LayUp.Common"
+        DataContext="{Binding Source={StaticResource Locator}, Path=Main}"
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
-
-        DataContext="{Binding Main,Source={StaticResource Locator}}"
+        
         >
     <Window.Resources>
         <Common:IntToBoolConverter x:Key="IntToBoolConverter1"/>
@@ -136,6 +136,7 @@
         </ControlTemplate>
 
     </Window.Resources>
+    
     <DockPanel >
         <!--菜单栏-->
         <Grid DockPanel.Dock="Top" Height="30">
@@ -147,7 +148,8 @@
 
                     </MenuItem>
                     <MenuItem Header="设备设置"  Command="{Binding ShowView2Command}"></MenuItem>
-                    <MenuItem Header="报警自定义"></MenuItem>
+                    <MenuItem Header="PLC IO表"  Command="{Binding ShowView2Command}"></MenuItem>
+                    <MenuItem Header="报警自定义" Command="{Binding ShowView2Command}"></MenuItem>
                 </MenuItem>
             </Menu>
         </Grid>
@@ -175,25 +177,25 @@
                     <TextBlock Text="返回码:"></TextBlock>
                     <TextBlock Text="{Binding LayupPLC.RetrunCode, Mode=OneWay}" />
                 </StackPanel>
-               
+
             </StatusBarItem>
             <Separator Grid.Column="1" />
             <StatusBarItem Grid.Column="2" >
-            
+
                 <!--通过使用Buttong的控件模板，使StatusBarItem可以单击-->
-                    <Button Click="Button_Click"  >
-                        <Button.Template>
-                            <ControlTemplate TargetType="{x:Type Button}">
-                                <StackPanel Orientation="Horizontal" MinHeight="30" MinWidth="120" VerticalAlignment="Center">
-                                    <TextBlock Text="当前错误:" VerticalAlignment="Center"></TextBlock>
-                                    <TextBlock Foreground="Red" VerticalAlignment="Center" Name="lblCursorPosition" Text="{Binding  LayupPLC.ErrorCode}" />
-                                </StackPanel>
-                            </ControlTemplate>
-                        </Button.Template>
-                    </Button>
-                  
-           
-              
+                <Button Click="Button_Click"  >
+                    <Button.Template>
+                        <ControlTemplate TargetType="{x:Type Button}">
+                            <StackPanel Orientation="Horizontal" MinHeight="30" MinWidth="120" VerticalAlignment="Center">
+                                <TextBlock Text="当前错误:" VerticalAlignment="Center"></TextBlock>
+                                <TextBlock Foreground="Red" VerticalAlignment="Center" Name="lblCursorPosition" Text="{Binding  LayupPLC.ErrorCode}" />
+                            </StackPanel>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
+
+
+
             </StatusBarItem>
             <Separator Grid.Column="3" />
             <StatusBarItem Grid.Column="4">
@@ -482,7 +484,7 @@
                 </Grid>
             </Grid>
             <!--#endregion-->
-            
+
             <!--#region 设置区-->
             <Grid Grid.Column="1">
                 <Grid.RowDefinitions>
@@ -573,7 +575,8 @@
                                 <TextBlock Text=""/>
                             </StackPanel>
                         </Button>
-                        <!--<Button MaxHeight="40" Grid.Row="0" Content="左进玻璃切换(M231M)"/>--><!--
+                        <!--<Button MaxHeight="40" Grid.Row="0" Content="左进玻璃切换(M231M)"/>-->
+                        <!--
                         <Button MaxHeight="40" Grid.Row="1" Content="左玻璃切换传出开启"/>
                         <Button MaxHeight="40" Grid.Row="2" Content="(M233M)"/>
                         <Button MaxHeight="40" Grid.Row="3" Content="(M234M)"/>
@@ -592,29 +595,48 @@
                 <StackPanel Margin="0,0,-0.4,0" Grid.RowSpan="2">
                     <Grid >
                         <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="1*"/>
                             <ColumnDefinition Width="2*"/>
-                            <ColumnDefinition Width="4*"/>
                         </Grid.ColumnDefinitions>
-                      
-                        <TextBlock FontSize="15" VerticalAlignment="Center" TextAlignment="Center" Grid.Column="0" Grid.Row="0" Text="连接类型"  ></TextBlock>
-                        <ComboBox Margin="5,0,5,0" HorizontalAlignment="Center" VerticalAlignment="Center"  MinWidth="50"  Grid.Column="1" Grid.Row="0" IsEnabled="{Binding LayupPLC.IsDisConnected}"  FontSize="12" >
-                            <ComboBoxItem Content="MX Component" IsSelected="True"/>
-                            <!--<ComboBoxItem Content="Modbus TCP"/>
-                            <ComboBoxItem Content="OPC"/>-->
-                        </ComboBox>
-                       
+
+                        <TextBlock FontSize="13" VerticalAlignment="Center" TextAlignment="Center" Grid.Column="0" Grid.Row="0" Text="连接类型"  ></TextBlock>
+                        <!--<ComboBox   HorizontalAlignment="Center"  MinWidth="100"  Grid.Column="1" Grid.Row="0"  FontSize="12"  SelectedIndex="0"  Height="22" VerticalAlignment="Bottom"  >
+                            <ComboBoxItem Content="ModbusTCP" IsSelected="True" >
+                                <i:Interaction.Triggers>
+                                    <i:EventTrigger EventName="Selected">
+                                        <command:EventToCommand Command="{Binding ChangeConnectionTypeCommand  }" CommandParameter="ModbusTCP" />
+
+                                    </i:EventTrigger>
+                                </i:Interaction.Triggers>
+                            </ComboBoxItem>
+                            <ComboBoxItem Content="MX Component" >
+                                <i:Interaction.Triggers>
+                                    <i:EventTrigger EventName="Selected">
+                                        <command:EventToCommand Command="{Binding ChangeConnectionTypeCommand  }" CommandParameter="MXComponent" />
+
+                                    </i:EventTrigger>
+                                </i:Interaction.Triggers>
+                            </ComboBoxItem>
+
+                        </ComboBox>-->
+
                     </Grid>
-                    <GroupBox Header="PLC信息" Name="GrpPLC"   Content="{Binding TestUI1,Source={StaticResource Locator}}">
-                       
+                    <!--<GroupBox Header="PLC信息" Name="GrpPLC"   Content="{Binding UCModbusTCP1,Source={StaticResource Locator}}">-->
+                    <GroupBox Header="PLC信息" Name="GrpPLC" >
+                        <Frame
+                    x:Name="Frame"
+                   
+                    NavigationUIVisibility="Hidden" Content="{Binding ConnectionType}" />
                     </GroupBox>
                     <Grid Margin="0,10,0,10">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition/>
                             <ColumnDefinition/>
+                            <ColumnDefinition/>
                         </Grid.ColumnDefinitions>
                         <Button  Content="连接" Command="{Binding ConnectCommand}" Width="80" Height="29" />
                         <Button Grid.Column="1" Content="断开连接" Command="{Binding StopMonitorCommand}" Width="80" />
-
+                        <Button Grid.Column="2" Content="{Binding LayupPLC.ConnectionMethod}" Command="{Binding ShowView2Command}" CommandParameter="en"/>
                     </Grid>
                 </StackPanel>
 

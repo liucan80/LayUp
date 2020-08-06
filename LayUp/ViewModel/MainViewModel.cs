@@ -9,6 +9,9 @@ using System.Timers;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Threading;
+using EasyModbus;
+using System.Windows.Controls;
+using LayUp.API;
 
 namespace LayUp.ViewModel
 {
@@ -24,12 +27,14 @@ namespace LayUp.ViewModel
     /// See http://www.galasoft.ch/mvvm
     /// </para>
     /// </summary>
-    public class MainViewModel : ViewModelBase
+    public class MainViewModel: ViewModelBase
     {
         /// <summary>
         /// Initializes a new instance of the MainViewModel class.
         /// </summary>
         /// 
+        ModbusClient ModbusClient1 ;
+
         private FrmPLC _frmPLC;
        public FrmPLC FrmPLC { 
             get 
@@ -44,6 +49,12 @@ namespace LayUp.ViewModel
         {
             get { return _layupPLC; }
             set { Set(ref _layupPLC,value); }
+        }
+        private Page _connectionType=PageManager.PageModbusTCP;
+        public  Page ConnectionType
+        {
+            get { return _connectionType; }
+            set { Set(ref _connectionType, value); }
         }
 
         private ObservableCollection<string> _returnCode ;
@@ -67,6 +78,14 @@ namespace LayUp.ViewModel
             get { return _output; }
             set { Set(ref _output, value); }
         }
+        ////连接方式
+        //private string _connectionMethod="ModbusTcp";
+
+        //public string ConnectionMethod
+        //{
+        //    get { return _connectionMethod; }
+        //    set { Set(ref _connectionMethod, value); }
+        //}
 
         //定时器
         private readonly DispatcherTimer DispatcherTimer1;
@@ -79,26 +98,20 @@ namespace LayUp.ViewModel
         public ICommand ShowView2Command { private set; get; }
         public ICommand SwitchLangugeCommand { get; set; }
         public ICommand WriteDataCommand { get; set; }
+        public ICommand ChangeConnectionTypeCommand { get; set; }
 
         public MainViewModel()
         {
-            ////if (IsInDesignMode)
-            ////{
-            ////    // Code runs in Blend --> create design time data.
-            ////}
-            ////else
-            ////{
-            ////    // Code runs "for real"
-            ////}
-            ///
             
+         
             ConnectCommand = new RelayCommand<bool>(Connect,CanConnectExcute);
             SwitchOutputCommand = new RelayCommand<string>(SwitchOutput);
             StopMonitorCommand = new RelayCommand<bool>(StopMonitor, CanStopMonitorExcute);
-
             ShowView2Command = new RelayCommand(ShowView2CommandExecute);
             SwitchLangugeCommand = new RelayCommand<string>(SwitchLanguage);
             WriteDataCommand = new RelayCommand<object>(WriteData);
+            ChangeConnectionTypeCommand = new RelayCommand<string>(ChangeConnectionType);
+
             _frmPLC = new FrmPLC();
             _layupPLC = new Fx3GA();
 
@@ -161,36 +174,77 @@ namespace LayUp.ViewModel
         private void Connect(bool isConnected)
         {
             //设置站号
-            _frmPLC.axActUtlType1.ActLogicalStationNumber = (int) LayupPLC.StationNumber;
-            
-            if (_layupPLC.IsConnected==true)
+            switch (LayupPLC.ConnectionMethod)
             {
+                case "ModbusTCP":
+                    #region 使用ModbusTcp连接
+                   
+                    if (_layupPLC.IsConnected == true)
+                    {
+                        DispatcherTimer1.Stop();
+                       
 
+                        LayupPLC.IsConnected = false;
+                    }
+                    else
+                    {
+                        ModbusClient1 = new ModbusClient(LayupPLC.IpAddress, (int)LayupPLC.Port);
+                        try
+                        {
+                            ModbusClient1.Connect();
+                            LayupPLC.IsConnected = true;
+                          
+                            DispatcherTimer1.Start();
+
+                        }
+                        catch (Exception e)
+                        {
+
+                            System.Windows.Forms.MessageBox.Show(e.Message);
+                        }
+                       
+                    }
+                    break;
+                #endregion
+
+                case "MXComponent":
+                    #region 使用MX component连接
+                    _frmPLC.axActUtlType1.ActLogicalStationNumber = (int)LayupPLC.StationNumber;
+
+                    if (_layupPLC.IsConnected == true)
+                    {
+                        
+                        DispatcherTimer1.Stop();
+                        _frmPLC.axActUtlType1.Close();
+
+                        LayupPLC.IsConnected = false;
+
+
+                    }
+                    else
+                    {
+                        int b = _frmPLC.axActUtlType1.Open();
+                        LayupPLC.RetrunCode = b.ToString();
+                        if (b == 0)
+                        {
+                            GetPLCInfo();
+                            DispatcherTimer1.Start();
+                            LayupPLC.IsConnected = true;
+                        }
+                        else
+                        {
+                            DispatcherTimer1.Stop();
+                            LayupPLC.IsConnected = false;
+
+                        }
+                    }
+                    break;
+                #endregion
+                default:
+                    break;
+            }
+           
             
-                DispatcherTimer1.Stop();
-                _frmPLC.axActUtlType1.Close();
-
-                LayupPLC.IsConnected = false;
-               
-
-            }
-            else
-            {
-                int b = _frmPLC.axActUtlType1.Open();
-                LayupPLC.RetrunCode = b.ToString();
-                if (b == 0)
-                {
-                    GetPLCInfo();
-                    DispatcherTimer1.Start();
-                    LayupPLC.IsConnected = true;
-                }
-                else
-                {
-                    DispatcherTimer1.Stop();
-                    LayupPLC.IsConnected = false;
-
-                }
-            }
             
            
         }
@@ -210,7 +264,20 @@ namespace LayUp.ViewModel
         private void StopMonitor(bool isConnected)
         {
             DispatcherTimer1.Stop();
-            _frmPLC.axActUtlType1.Close();
+            switch (LayupPLC.ConnectionMethod)
+            {
+                case "ModbusTCP":
+                    ModbusClient1.Disconnect();
+                    break;
+                case "MXComponent":
+                    _frmPLC.axActUtlType1.Close();
+                    break;
+                default:
+                    break;
+            }
+           
+           
+           
             _layupPLC.IsConnected = false;
         }
         //打开/关闭输出
@@ -234,131 +301,241 @@ namespace LayUp.ViewModel
             //_layupPLC.Output000 = a;
 
         }
+        private delegate int? MyDel(bool parameter);
+        MyDel del = (parameter) =>
+        {
+            if (parameter != true)
+            {
+                return 0;
+            }
+            else
+            {
+                return 1;
+            }
+        };
         //获取输出状态
         private void GetOutputStatus(object sender, System.EventArgs e)
         {
-            int[] a=new int[2];
-            int b = _frmPLC.axActUtlType1.ReadDeviceBlock("y000", 1, out a[0]);
-            if (b!=0)
+            switch (LayupPLC.ConnectionMethod)
             {
-                StopMonitor(true);
-                return;
-            }
-            string str = Convert.ToString(a[0], 2).PadLeft(16, '0');
-            int[] array1 = new int[16];
-            for (int i = 0; i < 16; i++)
-            {
-                array1[i] = int.Parse(str.Substring(i, 1));
-            }
+                case "ModbusTcp":
+                    if (true)
+                    {
 
-           // _returnCode.Add(String.Format("0x{0:x8} [HEX]", b));
-            _layupPLC.Output000 = array1[15];
-            _layupPLC.Output001 = array1[14];
-            _layupPLC.Output002 = array1[13];
-            _layupPLC.Output003 = array1[12];
-            _layupPLC.Output004 = array1[11];
-            _layupPLC.Output005 = array1[10];
-            _layupPLC.Output006 = array1[9];
-            _layupPLC.Output007 = array1[8];
-            _layupPLC.Output010 = array1[7];
-            _layupPLC.Output011 = array1[6];
-            _layupPLC.Output012 = array1[5];
-            _layupPLC.Output013 = array1[4];
-            _layupPLC.Output014 = array1[3];
-            _layupPLC.Output015 = array1[2];
-            _layupPLC.Output016 = array1[1];
-            _layupPLC.Output017 = array1[0];
+                        bool[] Result;
+                        Result = ModbusClient1.ReadCoils(0000, 16);
+                        _layupPLC.Output000 = del(Result[0]);
+                        _layupPLC.Output001 = del(Result[1]);
+                        _layupPLC.Output002 = del(Result[2]);
+                        _layupPLC.Output003 = del(Result[3]);
+                        _layupPLC.Output004 = del(Result[4]);
+                        _layupPLC.Output005 = del(Result[5]);
+                        _layupPLC.Output006 = del(Result[6]);
+                        _layupPLC.Output007 = del(Result[7]);
+                        _layupPLC.Output010 = del(Result[8]);
+                        _layupPLC.Output011 = del(Result[9]);
+                        _layupPLC.Output012 = del(Result[10]);
+                        _layupPLC.Output013 = del(Result[11]);
+                        _layupPLC.Output014 = del(Result[12]);
+                        _layupPLC.Output015 = del(Result[13]);
+                        _layupPLC.Output016 = del(Result[14]);
+                        _layupPLC.Output017 = del(Result[15]);
+                       
+                    }
+                    break;
+                case "MXComponent":
+
+                    int[] a = new int[2];
+                    int b = _frmPLC.axActUtlType1.ReadDeviceBlock("y000", 1, out a[0]);
+                    if (b != 0)
+                    {
+                        StopMonitor(true);
+                        return;
+                    }
+                    string str = Convert.ToString(a[0], 2).PadLeft(16, '0');
+                    int[] array1 = new int[16];
+                    for (int i = 0; i < 16; i++)
+                    {
+                        array1[i] = int.Parse(str.Substring(i, 1));
+                    }
+
+                    // _returnCode.Add(String.Format("0x{0:x8} [HEX]", b));
+                    _layupPLC.Output000 = array1[15];
+                    _layupPLC.Output001 = array1[14];
+                    _layupPLC.Output002 = array1[13];
+                    _layupPLC.Output003 = array1[12];
+                    _layupPLC.Output004 = array1[11];
+                    _layupPLC.Output005 = array1[10];
+                    _layupPLC.Output006 = array1[9];
+                    _layupPLC.Output007 = array1[8];
+                    _layupPLC.Output010 = array1[7];
+                    _layupPLC.Output011 = array1[6];
+                    _layupPLC.Output012 = array1[5];
+                    _layupPLC.Output013 = array1[4];
+                    _layupPLC.Output014 = array1[3];
+                    _layupPLC.Output015 = array1[2];
+                    _layupPLC.Output016 = array1[1];
+                    _layupPLC.Output017 = array1[0];
+                    break;
+                default:
+                    break;
+            }
+           
+           
 
         }
         //获取输入状态
 
         private void GetInputStatus(object sender, System.EventArgs e)
         {
-            int[] a = new int[2];
-            int b = _frmPLC.axActUtlType1.ReadDeviceBlock("X000", 2, out a[0]);
-            string str = Convert.ToString(a[0], 2).PadLeft(16, '0');
+            if (LayupPLC.ConnectionMethod == "ModbusTCP")
+            {
+                bool[] Result;
+                Result = ModbusClient1.ReadDiscreteInputs(0000, 24);
 
-            int[] array1 = new int[16];
-            int[] array2 = new int[16];
-            for (int i = 0; i < 16; i++)
-            {
-                array1[i] = int.Parse(str.Substring(i,1));
+               
+                _layupPLC.Input000 = del(Result[0]);
+                _layupPLC.Input001 = del(Result[1]);
+                _layupPLC.Input002 = del(Result[2]);
+                _layupPLC.Input003 = del(Result[3]);
+                _layupPLC.Input004 = del(Result[4]);
+                _layupPLC.Input005 = del(Result[5]);
+                _layupPLC.Input006 = del(Result[6]);
+                _layupPLC.Input007 = del(Result[7]);
+                _layupPLC.Input010 = del(Result[8]);
+                _layupPLC.Input011 = del(Result[9]);
+                _layupPLC.Input012 = del(Result[10]);
+                _layupPLC.Input013 = del(Result[11]);
+                _layupPLC.Input014 = del(Result[12]);
+                _layupPLC.Input015 = del(Result[13]);
+                _layupPLC.Input016 = del(Result[14]);
+                _layupPLC.Input017 = del(Result[15]);
+                _layupPLC.Input020 = del(Result[16]);
+                _layupPLC.Input021 = del(Result[17]);
+                _layupPLC.Input022 = del(Result[18]);
+                _layupPLC.Input023 = del(Result[19]);
+                _layupPLC.Input024 = del(Result[20]);
+                _layupPLC.Input025 = del(Result[21]);
+                _layupPLC.Input026 = del(Result[22]);
+                _layupPLC.Input027 = del(Result[23]);
             }
-            str = Convert.ToString(a[1], 2).PadLeft(16, '0');
-            for (int i = 0; i < 16; i++)
+            else
             {
-                array2[i] = int.Parse(str.Substring(i, 1));
+                int[] a = new int[2];
+                int b = _frmPLC.axActUtlType1.ReadDeviceBlock("X000", 2, out a[0]);
+                string str = Convert.ToString(a[0], 2).PadLeft(16, '0');
+
+                int[] array1 = new int[16];
+                int[] array2 = new int[16];
+                for (int i = 0; i < 16; i++)
+                {
+                    array1[i] = int.Parse(str.Substring(i, 1));
+                }
+                str = Convert.ToString(a[1], 2).PadLeft(16, '0');
+                for (int i = 0; i < 16; i++)
+                {
+                    array2[i] = int.Parse(str.Substring(i, 1));
+                }
+                _layupPLC.Input000 = array1[15];
+                _layupPLC.Input001 = array1[14];
+                _layupPLC.Input002 = array1[13];
+                _layupPLC.Input003 = array1[12];
+                _layupPLC.Input004 = array1[11];
+                _layupPLC.Input005 = array1[10];
+                _layupPLC.Input006 = array1[9];
+                _layupPLC.Input007 = array1[8];
+                _layupPLC.Input010 = array1[7];
+                _layupPLC.Input011 = array1[6];
+                _layupPLC.Input012 = array1[5];
+                _layupPLC.Input013 = array1[4];
+                _layupPLC.Input014 = array1[3];
+                _layupPLC.Input015 = array1[2];
+                _layupPLC.Input016 = array1[1];
+                _layupPLC.Input017 = array1[0];
+                _layupPLC.Input020 = array2[15];
+                _layupPLC.Input021 = array2[14];
+                _layupPLC.Input022 = array2[13];
+                _layupPLC.Input023 = array2[12];
+                _layupPLC.Input024 = array2[11];
+                _layupPLC.Input025 = array2[10];
+                _layupPLC.Input026 = array2[9];
+                _layupPLC.Input027 = array2[8];
+                // _layupPLC.Input004 = array1[0];
+                //Console.WriteLine(str);
+                //   BitConverter
+
             }
-            _layupPLC.Input000 = array1[15];
-            _layupPLC.Input001 = array1[14];
-            _layupPLC.Input002 = array1[13];
-            _layupPLC.Input003 = array1[12];
-            _layupPLC.Input004 = array1[11];
-            _layupPLC.Input005 = array1[10];
-            _layupPLC.Input006 = array1[9];
-            _layupPLC.Input007 = array1[8];
-            _layupPLC.Input010 = array1[7];
-            _layupPLC.Input011 = array1[6];
-            _layupPLC.Input012 = array1[5];
-            _layupPLC.Input013 = array1[4];
-            _layupPLC.Input014 = array1[3];
-            _layupPLC.Input015 = array1[2];
-            _layupPLC.Input016 = array1[1];
-            _layupPLC.Input017 = array1[0];
-            _layupPLC.Input020 = array2[15];
-            _layupPLC.Input021 = array2[14];
-            _layupPLC.Input022 = array2[13];
-            _layupPLC.Input023 = array2[12];
-            _layupPLC.Input024 = array2[11];
-            _layupPLC.Input025 = array2[10];
-            _layupPLC.Input026 = array2[9];
-            _layupPLC.Input027 = array2[8];
-            // _layupPLC.Input004 = array1[0];
-            //Console.WriteLine(str);
-         //   BitConverter
-            
+
+
         }
         //获取D寄存器状态
         private void GetDataStatus(object sender, System.EventArgs e)
         {
-            int[] a = new int[16];
-            int b = _frmPLC.axActUtlType1.ReadDeviceBlock("D200", 16, out a[0]);
-            foreach (var item in a)
+            if (LayupPLC.ConnectionMethod == "ModbusTCP")
             {
-                
-                Console.WriteLine(item.ToString());
+                int[] Result;
+                Result = ModbusClient1.ReadHoldingRegisters(192, 24);
+                _layupPLC.Data200 = Result[8];
+                _layupPLC.Data201 = Result[9];
+                _layupPLC.Data202 = Result[10];
+                _layupPLC.Data210 = Result[18];
+                _layupPLC.Data211 = Result[19];
+                _layupPLC.Data212 = Result[20];
             }
-            _layupPLC.Data200 = a[0];
-            _layupPLC.Data201 = a[1];
-            _layupPLC.Data202 = a[2];
-            _layupPLC.Data210 = a[10];
-            _layupPLC.Data211 = a[11];
-            _layupPLC.Data212 = a[12];
+            else
+            {
+
+                int[] a = new int[16];
+                int b = _frmPLC.axActUtlType1.ReadDeviceBlock("D200", 16, out a[0]);
+                foreach (var item in a)
+                {
+
+                    Console.WriteLine(item.ToString());
+                }
+                _layupPLC.Data200 = a[0];
+                _layupPLC.Data201 = a[1];
+                _layupPLC.Data202 = a[2];
+                _layupPLC.Data210 = a[10];
+                _layupPLC.Data211 = a[11];
+                _layupPLC.Data212 = a[12];
+            }
         }
         //获取M寄存器状态
         private void GetMStatus(object sender, System.EventArgs e)
         {
-
-            int[] a = new int[2];
-            int b = _frmPLC.axActUtlType1.ReadDeviceBlock("M224", 1, out a[0]);
-            //if (b != 0)
-            //{
-            //    StopMonitor(true);
-            //    return;
-            //}
-            string str = Convert.ToString(a[0], 2).PadLeft(16, '0');
-            int[] array1 = new int[16];
-            for (int i = 0; i < 16; i++)
+            if (LayupPLC.ConnectionMethod == "ModbusTCP")
             {
-                array1[i] = int.Parse(str.Substring(i, 1));
-            }
 
-            // _returnCode.Add(String.Format("0x{0:x8} [HEX]", b));
-            _layupPLC.M231 = array1[8];
-            _layupPLC.M232 = array1[7];
-            _layupPLC.M233 = array1[6];
-            _layupPLC.M234 = array1[5];
-            _layupPLC.M235 = array1[4];
+                bool[] Result;
+                Result = ModbusClient1.ReadCoils(8416, 16);
+
+                _layupPLC.M231 = del(Result[7]);
+                _layupPLC.M232 = del(Result[8]);
+                _layupPLC.M233 = del(Result[9]);
+                _layupPLC.M234 = del(Result[10]);
+                _layupPLC.M235 = del(Result[11]);
+                return;
+            }
+            else
+            {
+                int[] a = new int[2];
+                int b = _frmPLC.axActUtlType1.ReadDeviceBlock("M224", 1, out a[0]);
+                
+                string str = Convert.ToString(a[0], 2).PadLeft(16, '0');
+                int[] array1 = new int[16];
+                for (int i = 0; i < 16; i++)
+                {
+                    array1[i] = int.Parse(str.Substring(i, 1));
+                }
+
+                // _returnCode.Add(String.Format("0x{0:x8} [HEX]", b));
+                _layupPLC.M231 = array1[8];
+                _layupPLC.M232 = array1[7];
+                _layupPLC.M233 = array1[6];
+                _layupPLC.M234 = array1[5];
+                _layupPLC.M235 = array1[4];
+            }
+            
         }
         //获取PLC基本信息
         private void GetPLCInfo()
@@ -373,15 +550,28 @@ namespace LayUp.ViewModel
 
         private void WriteData(object parameter)
         {
+
             int[] a = new int[3];
             var values = (object[])parameter;
-               int temp= Convert.ToInt32(values[0]);
-               int b= _frmPLC.axActUtlType1.SetDevice("D200",temp );
-                b= _frmPLC.axActUtlType1.SetDevice("D201", Convert.ToInt32(values[1]));
-                b= _frmPLC.axActUtlType1.SetDevice("D202", Convert.ToInt32(values[2]));
-                b= _frmPLC.axActUtlType1.SetDevice("D210", Convert.ToInt32(values[3]));
-                b= _frmPLC.axActUtlType1.SetDevice("D211", Convert.ToInt32(values[4]));
-                b= _frmPLC.axActUtlType1.SetDevice("D212", Convert.ToInt32(values[5]));
+            if (LayupPLC.ConnectionMethod=="ModbusTCP")
+            {
+                ModbusClient1.WriteSingleRegister(10000,Convert.ToInt32(values[0]));
+                ModbusClient1.WriteSingleRegister(10001,Convert.ToInt32(values[1]));
+                ModbusClient1.WriteSingleRegister(10002,Convert.ToInt32(values[2]));
+                ModbusClient1.WriteSingleRegister(10010,Convert.ToInt32(values[3]));
+                ModbusClient1.WriteSingleRegister(10011,Convert.ToInt32(values[4]));
+                ModbusClient1.WriteSingleRegister(10012,Convert.ToInt32(values[5]));
+            }
+            else
+            {
+                int b = _frmPLC.axActUtlType1.SetDevice("D200", Convert.ToInt32(values[0]));
+                b = _frmPLC.axActUtlType1.SetDevice("D201", Convert.ToInt32(values[1]));
+                b = _frmPLC.axActUtlType1.SetDevice("D202", Convert.ToInt32(values[2]));
+                b = _frmPLC.axActUtlType1.SetDevice("D210", Convert.ToInt32(values[3]));
+                b = _frmPLC.axActUtlType1.SetDevice("D211", Convert.ToInt32(values[4]));
+                b = _frmPLC.axActUtlType1.SetDevice("D212", Convert.ToInt32(values[5]));
+            }
+              
             
            // int b = _frmPLC.axActUtlType1.WriteDeviceBlock("D200", 3, ref a[0]);
         }
@@ -425,6 +615,32 @@ namespace LayUp.ViewModel
 
             
 
+        }
+
+
+        #region 页面切换
+        
+        #endregion
+        //改变连接方式
+        private void ChangeConnectionType(string connectionType)
+        {
+           
+            switch (connectionType)
+            {
+                case "MXComponent":
+                    ConnectionType=PageManager.PageMXComponent;
+                    LayupPLC.ConnectionMethod = "MXComponent";
+                   // ConnectionMethod = "MXComponent";
+                    break;
+                case "ModbusTCP":
+                    ConnectionType = PageManager.PageModbusTCP;
+                    LayupPLC.ConnectionMethod = "ModbusTCP";
+                    //ConnectionMethod = "ModbusTcp";
+
+                    break;
+                default:
+                    break;
+            }
         }
     }
 }

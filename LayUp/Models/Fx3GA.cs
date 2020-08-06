@@ -12,7 +12,21 @@ namespace LayUp.Models
     /// </summary>
   public  class Fx3GA:ObservableObject
     {
+        public List<string> ConnectionMethods = new List<string>
+        {
+             "MXComponent","ModbusTCP",
+        };
+       
+        
+        //PLC连接方式
+        private String _connectionMethod="ModbusTCP";
+        public String ConnectionMethod
+        {
+            get { return _connectionMethod; }
+            set { Set(ref _connectionMethod, value); }
+        }
 
+        //PLC站号 用来连接MX Component
         private int? _stationNumber;
         public int? StationNumber
         { 
@@ -20,8 +34,22 @@ namespace LayUp.Models
             set { Set(ref _stationNumber, value); } 
         }
 
+        //PLC的IP地址 用来连接Modbus
+        private String _ipAddress="127.0.0.1";
+        public String IpAddress
+        {
+            get { return _ipAddress; }
+            set { Set(ref _ipAddress, value); }
+        }
+        //PLC的端口 用来连接Modbus
+        private int? _port=502;
+        public int? Port
+        {
+            get { return _port; }
+            set { Set(ref _port, value); }
+        }
+        //PLC的连接状态
         private bool? _isConnected=false;
-
         public bool? IsConnected
         {
             get { return _isConnected; }
@@ -29,16 +57,18 @@ namespace LayUp.Models
             {
                // _isConnected = value;
                 Set(ref _isConnected, value);
-                Set(ref _isDisConnected, !value);
+                _isDisConnected = !value;
+               // Set(ref _isDisConnected, !value);
 
 
             }
         }
+        //PLC的连接状态  断开时为真
         private bool? _isDisConnected = true;
 
         public bool? IsDisConnected
         {
-            get { return _isDisConnected; }
+            get { return !_isConnected; }
             set
             {
                 // _isConnected = value;
