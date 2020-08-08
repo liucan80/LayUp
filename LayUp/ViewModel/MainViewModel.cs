@@ -1,5 +1,5 @@
 using GalaSoft.MvvmLight;
-using GalaSoft.MvvmLight.CommandWpf;
+//using GalaSoft.MvvmLight.CommandWpf;
 using GalaSoft.MvvmLight.Messaging;
 using LayUp.Models;
 using System;
@@ -12,6 +12,7 @@ using System.Windows.Threading;
 using EasyModbus;
 using System.Windows.Controls;
 using LayUp.API;
+using GalaSoft.MvvmLight.Command;
 
 namespace LayUp.ViewModel
 {
@@ -50,8 +51,9 @@ namespace LayUp.ViewModel
             get { return _layupPLC; }
             set { Set(ref _layupPLC,value); }
         }
-        private Page _connectionType=PageManager.PageModbusTCP;
-        public  Page ConnectionType
+
+        private Page _connectionType;
+        public Page ConnectionType
         {
             get { return _connectionType; }
             set { Set(ref _connectionType, value); }
@@ -78,14 +80,7 @@ namespace LayUp.ViewModel
             get { return _output; }
             set { Set(ref _output, value); }
         }
-        ////连接方式
-        //private string _connectionMethod="ModbusTcp";
-
-        //public string ConnectionMethod
-        //{
-        //    get { return _connectionMethod; }
-        //    set { Set(ref _connectionMethod, value); }
-        //}
+        
 
         //定时器
         private readonly DispatcherTimer DispatcherTimer1;
@@ -95,7 +90,7 @@ namespace LayUp.ViewModel
         public ICommand StopMonitorCommand { get; set; }
        
 
-        public ICommand ShowView2Command { private set; get; }
+        public ICommand ShowViewCommand { private set; get; }
         public ICommand SwitchLangugeCommand { get; set; }
         public ICommand WriteDataCommand { get; set; }
         public ICommand ChangeConnectionTypeCommand { get; set; }
@@ -107,7 +102,7 @@ namespace LayUp.ViewModel
             ConnectCommand = new RelayCommand<bool>(Connect,CanConnectExcute);
             SwitchOutputCommand = new RelayCommand<string>(SwitchOutput);
             StopMonitorCommand = new RelayCommand<bool>(StopMonitor, CanStopMonitorExcute);
-            ShowView2Command = new RelayCommand(ShowView2CommandExecute);
+            ShowViewCommand = new RelayCommand<string>(ShowViewCommandExecute);
             SwitchLangugeCommand = new RelayCommand<string>(SwitchLanguage);
             WriteDataCommand = new RelayCommand<object>(WriteData);
             ChangeConnectionTypeCommand = new RelayCommand<string>(ChangeConnectionType);
@@ -318,7 +313,7 @@ namespace LayUp.ViewModel
         {
             switch (LayupPLC.ConnectionMethod)
             {
-                case "ModbusTcp":
+                case "ModbusTCP":
                     if (true)
                     {
 
@@ -507,6 +502,8 @@ namespace LayUp.ViewModel
             {
 
                 bool[] Result;
+                //获取M224-M239的值 
+
                 Result = ModbusClient1.ReadCoils(8416, 16);
 
                 _layupPLC.M231 = del(Result[7]);
@@ -514,29 +511,65 @@ namespace LayUp.ViewModel
                 _layupPLC.M233 = del(Result[9]);
                 _layupPLC.M234 = del(Result[10]);
                 _layupPLC.M235 = del(Result[11]);
+
+                Result = ModbusClient1.ReadCoils(8416, 16);
+
                 return;
             }
             else
             {
                 int[] a = new int[2];
-                int b = _frmPLC.axActUtlType1.ReadDeviceBlock("M224", 1, out a[0]);
-                
-                string str = Convert.ToString(a[0], 2).PadLeft(16, '0');
-                int[] array1 = new int[16];
-                for (int i = 0; i < 16; i++)
-                {
-                    array1[i] = int.Parse(str.Substring(i, 1));
-                }
+                int[] b = new int[2];
+                //获取M224-M239的值
+                int c = _frmPLC.axActUtlType1.ReadDeviceBlock("M224", 1, out a[0]);
+                //获取M128-M143的值
+                c = _frmPLC.axActUtlType1.ReadDeviceBlock("M128", 1, out b[0]);
 
-                // _returnCode.Add(String.Format("0x{0:x8} [HEX]", b));
+                int[] array1 = Convert1(a[0]);
+                int[] array2 = Convert1(b[0]);
+
+
                 _layupPLC.M231 = array1[8];
                 _layupPLC.M232 = array1[7];
                 _layupPLC.M233 = array1[6];
                 _layupPLC.M234 = array1[5];
                 _layupPLC.M235 = array1[4];
+
+                _layupPLC.M128 = array2[15];
+                _layupPLC.M129 = array2[14];
+                _layupPLC.M130 = array2[13];
+                _layupPLC.M131 = array2[12];
+                _layupPLC.M132 = array2[11];
+                _layupPLC.M133 = array2[10];
+                _layupPLC.M134 = array2[9];
+                _layupPLC.M135 = array2[8];
+                _layupPLC.M136 = array2[7];
+                _layupPLC.M137 = array2[6];
+                _layupPLC.M138 = array2[5];
+                _layupPLC.M139 = array2[4];
+                _layupPLC.M140 = array2[3];
+                _layupPLC.M141 = array2[2];
+                _layupPLC.M142 = array2[1];
+                _layupPLC.M143 = array2[0];
+
+
+
             }
-            
+
         }
+
+        private static int[] Convert1(int a)
+        {
+            string str = Convert.ToString(a, 2).PadLeft(16, '0');
+            int[] array1 = new int[16];
+            for (int i = 0; i < 16; i++)
+            {
+                array1[i] = int.Parse(str.Substring(i, 1));
+            }
+
+            return array1;
+        }
+
         //获取PLC基本信息
         private void GetPLCInfo()
         {
@@ -581,9 +614,9 @@ namespace LayUp.ViewModel
             int tempReturnCode =_frmPLC.axActUtlType1.SetDevice("m0081", 0);
 
         }
-        public void ShowView2CommandExecute()
+        public void ShowViewCommandExecute(string viewName)
         {
-            Messenger.Default.Send(new NotificationMessage("ShowView2"));
+            Messenger.Default.Send(new NotificationMessage(viewName));
         }
         //切换界面语言
         public void SwitchLanguage(string str)
@@ -628,12 +661,12 @@ namespace LayUp.ViewModel
             switch (connectionType)
             {
                 case "MXComponent":
-                    ConnectionType=PageManager.PageMXComponent;
+                   // ConnectionType = PageManager.PageMXComponent;
                     LayupPLC.ConnectionMethod = "MXComponent";
-                   // ConnectionMethod = "MXComponent";
+                    // ConnectionMethod = "MXComponent";
                     break;
                 case "ModbusTCP":
-                    ConnectionType = PageManager.PageModbusTCP;
+                   // ConnectionType = PageManager.PageMXComponent;
                     LayupPLC.ConnectionMethod = "ModbusTCP";
                     //ConnectionMethod = "ModbusTcp";
 

@@ -4,7 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:LayUp.Views"
-        DataContext="{Binding Path=Main, Source={StaticResource Locator}}"
+        DataContext="{Binding Path=SettingViewModel, Source={StaticResource Locator}}"
         mc:Ignorable="d"
         Title="DefaultWindow" Height="450" Width="800">
     <Grid>
@@ -12,6 +12,8 @@
             <ColumnDefinition Width="105*"/>
             <ColumnDefinition Width="688*"/>
         </Grid.ColumnDefinitions>
-        <TextBlock Text="{Binding LayupPLC.ConnectionMethod}" Grid.ColumnSpan="2" Margin="0,0,-0.4,0"></TextBlock>
+        <Button Grid.Column="1"  Content="{Binding Hello}"  Click="ButtonBase_OnClick" Height="420"  VerticalAlignment="Top"/>
+
+        <TextBlock Text="{Binding Hello}"></TextBlock>
     </Grid>
 </Window>

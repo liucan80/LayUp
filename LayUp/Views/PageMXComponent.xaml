@@ -18,14 +18,14 @@
             <RowDefinition />
             <RowDefinition/>
         </Grid.RowDefinitions>
-        <TextBlock VerticalAlignment="Center" TextAlignment="Center" Grid.Column="0" Grid.Row="0" Text="PLC站号:"  ></TextBlock>
+        <TextBlock VerticalAlignment="Center" TextAlignment="Center" Grid.Column="0" Grid.Row="0" Text="{DynamicResource StationNumber}"  ></TextBlock>
         <ComboBox Margin="5" HorizontalAlignment="Center" VerticalAlignment="Center"  MinWidth="50"  Grid.Column="1" Grid.Row="0" IsEnabled="{Binding LayupPLC.IsDisConnected}" Text="{Binding LayupPLC.StationNumber, Mode=OneWayToSource}" FontSize="12" >
             <ComboBoxItem Content="1" IsSelected="True"/>
 
             <ComboBoxItem Content="2"/>
             <ComboBoxItem Content="3"/>
         </ComboBox>
-        <TextBlock  VerticalAlignment="Center" TextAlignment="Center" Grid.Column="0" Grid.Row="1" Text="PLC类:"  />
+        <TextBlock  VerticalAlignment="Center" TextAlignment="Center" Grid.Column="0" Grid.Row="1" Text="{DynamicResource PLCType}"  />
         <TextBox Margin="5"  HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center"  MinWidth="50"  Grid.Column="1" Grid.Row="1" Text="{Binding LayupPLC.CPUName, Mode=OneWay}" IsReadOnly="True" FontSize="12" ></TextBox>
 
     </Grid>

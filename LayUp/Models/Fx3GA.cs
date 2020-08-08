@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
 using GalaSoft.MvvmLight;
 
 namespace LayUp.Models
@@ -581,6 +582,153 @@ namespace LayUp.Models
         #endregion
 
         #region M寄存器
+      
+        private int? _M128;
+        public int? M128
+        {
+            get { return _M128; }
+            set
+            {
+                Set(ref _M128, value);
+            }
+        }
+        private int? _M129;
+        public int? M129
+        {
+            get { return _M129; }
+            set
+            {
+                Set(ref _M129, value);
+            }
+        }
+        private int? _M130;
+        public int? M130
+        {
+            get { return _M130; }
+            set
+            {
+                Set(ref _M130, value);
+            }
+        }
+        private int? _M131;
+        public int? M131
+        {
+            get { return _M131; }
+            set
+            {
+                Set(ref _M131, value);
+            }
+        }
+        private int? _M132;
+        public int? M132
+        {
+            get { return _M132; }
+            set
+            {
+                Set(ref _M132, value);
+            }
+        }
+        private int? _M133;
+        public int? M133
+        {
+            get { return _M133; }
+            set
+            {
+                Set(ref _M133, value);
+            }
+        }
+        private int? _M134;
+        public int? M134
+        {
+            get { return _M134; }
+            set
+            {
+                Set(ref _M134, value);
+            }
+        }
+        private int? _M135;
+        public int? M135
+        {
+            get { return _M135; }
+            set
+            {
+                Set(ref _M135, value);
+            }
+        }
+        private int? _M136;
+        public int? M136
+        {
+            get { return _M136; }
+            set
+            {
+                Set(ref _M136, value);
+            }
+        }
+        private int? _M137;
+        public int? M137
+        {
+            get { return _M137; }
+            set
+            {
+                Set(ref _M137, value);
+            }
+        }
+        private int? _M138;
+        public int? M138
+        {
+            get { return _M138; }
+            set
+            {
+                Set(ref _M138, value);
+            }
+        }
+        private int? _M139;
+        public int? M139
+        {
+            get { return _M139; }
+            set
+            {
+                Set(ref _M139, value);
+            }
+        }
+        private int? _M140;
+        public int? M140
+        {
+            get { return _M140; }
+            set
+            {
+                Set(ref _M140, value);
+            }
+        }
+
+        private int? _M141;
+        public int? M141
+        {
+            get { return _M141; }
+            set
+            {
+                Set(ref _M141, value);
+            }
+        }
+
+        private int? _M142;
+        public int? M142
+        {
+            get { return _M142; }
+            set
+            {
+                Set(ref _M142, value);
+            }
+        }
+        private int? _M143;
+        public int? M143
+        {
+            get { return _M143; }
+            set
+            {
+                Set(ref _M143, value);
+            }
+        }
         private int? _M231;
 
         public int? M231

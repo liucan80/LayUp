@@ -10,6 +10,7 @@ namespace LayUp.API
   public  class PageManager
     {
         public static PageModbusTCP PageModbusTCP = new PageModbusTCP();
+
         public static PageMXComponent PageMXComponent = new PageMXComponent();
     }
 }

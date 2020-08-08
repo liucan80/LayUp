@@ -16,7 +16,7 @@ using System.Windows.Shapes;
 namespace LayUp.Views
 {
     /// <summary>
-    /// PageModbusTcp.xaml 的交互逻辑
+    /// PageModbusTCP.xaml 的交互逻辑
     /// </summary>
     public partial class PageModbusTCP : Page
     {

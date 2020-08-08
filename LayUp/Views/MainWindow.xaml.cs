@@ -1,7 +1,12 @@
-﻿using GalaSoft.MvvmLight.Messaging;
+﻿using GalaSoft.MvvmLight.Ioc;
+using GalaSoft.MvvmLight.Messaging;
+using LayUp.Models;
+using LayUp.ViewModel;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Windows;
@@ -15,18 +20,29 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Windows.Threading;
 
-namespace LayUp
+
+namespace LayUp.Views
 {
     /// <summary>
     /// MainWindow.xaml 的交互逻辑
     /// </summary>
     public partial class MainWindow : Window
     {
+        private List<IO> _IOList;
+        /// <summary>
+        /// 数据列表
+        /// </summary>
+        public List<IO> IOList
+        {
+            get { return _IOList; }
+            set { _IOList = value; }
+        }
         private readonly DispatcherTimer DispatcherTimer2;
         private string _currentTime;
         public MainWindow()
         {
             InitializeComponent();
+           
             Messenger.Default.Register<NotificationMessage>(this, NotificationMessageReceived);
             //初始化定时器，显示当前时间
             DispatcherTimer2 = new DispatcherTimer();
@@ -44,16 +60,24 @@ namespace LayUp
         }
         private void NotificationMessageReceived(NotificationMessage msg)
         {
-            if (msg.Notification == "ShowView2")
+            if (msg.Notification == "View2")
             {
                 var view2 = new Views.SettingView();
                 view2.ShowDialog();
             }
+            if (msg.Notification == "IOTable")
+            {
+                
+                var IOTable = new Views.WindowIOTable();
+                IOTable.ShowDialog();
+            }
+
         }
 
         private void Button_Click(object sender, RoutedEventArgs e)
         {
             System.Windows.Forms.MessageBox.Show("Test");
+
         }
 
         private void ComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -61,6 +85,40 @@ namespace LayUp
             
             //  var container=ViewModel.ViewModelLocator.
             
+        }
+
+        private void Button_Click_1(object sender, RoutedEventArgs e)
+        {
+            Debug.Print(DataContext.ToString());
+
+        }
+
+        private void MenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            this.Close();
+        }
+
+        private void MenuItem_Click_1(object sender, RoutedEventArgs e)
+        {
+            this.WindowState = WindowState.Minimized;
+        }
+
+        private void ContextMenu_Click(object sender, RoutedEventArgs e)
+        {
+            switch (((MenuItem)e.OriginalSource).Tag.ToString())
+            {
+                case ("MenuNormal"):
+                    this.WindowState = WindowState.Normal;
+                    break;
+                case ("MenuMin"):
+                    this.WindowState = WindowState.Minimized;
+                    break;
+                case ("MenuClose"):
+                    this.Close();
+                    break;
+                default:
+                    break;
+            }    ;
         }
     }
 }

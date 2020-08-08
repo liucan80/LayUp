@@ -12,5 +12,10 @@ namespace LayUp
     /// </summary>
     public partial class App : Application
     {
+        public App()
+        {
+            ResourceDictionary dict = new ResourceDictionary();
+
+        }
     }
 }

@@ -76,6 +76,9 @@
     <Reference Include="GalaSoft.MvvmLight.Platform, Version=5.4.1.0, Culture=neutral, PublicKeyToken=5f873c45e98af8a1, processorArchitecture=MSIL">
       <HintPath>..\packages\MvvmLightLibs.5.4.1\lib\net45\GalaSoft.MvvmLight.Platform.dll</HintPath>
     </Reference>
+    <Reference Include="Hardcodet.Wpf.TaskbarNotification, Version=1.0.5.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Hardcodet.NotifyIcon.Wpf.1.0.8\lib\net45\Hardcodet.Wpf.TaskbarNotification.dll</HintPath>
+    </Reference>
     <Reference Include="MaterialDesignColors, Version=1.2.2.920, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\MaterialDesignColors.1.2.2\lib\net45\MaterialDesignColors.dll</HintPath>
     </Reference>
@@ -116,6 +119,7 @@
     <Compile Include="Common\IntToBoolConverter.cs" />
     <Compile Include="Common\MutilValueConverter.cs" />
     <Compile Include="Common\ReverseBoolConverter.cs" />
+    <Compile Include="Common\StringToPageConverter.cs" />
     <Compile Include="Error.cs" />
     <Compile Include="FrmPLC.cs">
       <SubType>Form</SubType>
@@ -125,8 +129,10 @@
     </Compile>
     <Compile Include="Models\Error.cs" />
     <Compile Include="Models\Fx3GA.cs" />
+    <Compile Include="Models\IO.cs" />
     <Compile Include="Models\SettingModel.cs" />
     <Compile Include="ViewModel\ErrorLogViewModel.cs" />
+    <Compile Include="ViewModel\IOTableViewModel.cs" />
     <Compile Include="ViewModel\MainViewModel.cs" />
     <Compile Include="ViewModel\SettingViewModel.cs" />
     <Compile Include="ViewModel\ViewModelLocator.cs" />
@@ -136,7 +142,7 @@
     <Compile Include="Views\ErrorLogView.xaml.cs">
       <DependentUpon>ErrorLogView.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Views\PageModbusTCP.cs">
+    <Compile Include="Views\PageModbusTCP.xaml.cs">
       <DependentUpon>PageModbusTCP.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\PageMXComponent.xaml.cs">
@@ -145,8 +151,23 @@
     <Compile Include="Views\SettingView.xaml.cs">
       <DependentUpon>SettingView.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Views\WindowIOTable.xaml.cs">
+      <DependentUpon>WindowIOTable.xaml</DependentUpon>
+    </Compile>
+    <Page Include="Views\WindowIOTable.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Resource Include="CustomError.txt" />
-    <Resource Include="IO.txt" />
+    <None Include="IO.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <Resource Include="Images\TrayIcons\Logo.png" />
+    <Resource Include="Images\TrayIcons\Logo.ico">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Images\TrayIcons\Monitor.ico" />
+    <Resource Include="Images\TrayIcons\red.png" />
     <Content Include="Languages\en.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>

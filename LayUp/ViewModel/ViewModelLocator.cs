@@ -15,7 +15,6 @@
 using CommonServiceLocator;
 using GalaSoft.MvvmLight;
 using GalaSoft.MvvmLight.Ioc;
-using LayUp.ViewModel;
 
 
 namespace LayUp.ViewModel
@@ -45,6 +44,8 @@ namespace LayUp.ViewModel
             ////}
 
             SimpleIoc.Default.Register<MainViewModel>();
+            SimpleIoc.Default.Register<SettingViewModel>();
+            SimpleIoc.Default.Register<IOTableViewModel>();
         }
 
         public MainViewModel Main
@@ -54,7 +55,22 @@ namespace LayUp.ViewModel
                 return ServiceLocator.Current.GetInstance<MainViewModel>();
             }
         }
-        
+        public SettingViewModel SettingViewModel
+        {
+            get
+            {
+                return ServiceLocator.Current.GetInstance<SettingViewModel>();
+            }
+        }
+        public IOTableViewModel IOTableViewModel
+        {
+            get
+            {
+                return ServiceLocator.Current.GetInstance<IOTableViewModel>();
+            }
+        }
+
+
         public static void Cleanup()
         {
             // TODO Clear the ViewModels
