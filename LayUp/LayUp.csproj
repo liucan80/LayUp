@@ -91,6 +91,7 @@
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Drawing" />
+    <Reference Include="System.Management" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Windows.Interactivity, Version=4.5.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>..\packages\MvvmLightLibs.5.4.1\lib\net45\System.Windows.Interactivity.dll</HintPath>
@@ -118,6 +119,7 @@
     <Compile Include="Common\IntToColorConverter.cs" />
     <Compile Include="Common\IntToBoolConverter.cs" />
     <Compile Include="Common\MutilValueConverter.cs" />
+    <Compile Include="Common\PrintDG.cs" />
     <Compile Include="Common\ReverseBoolConverter.cs" />
     <Compile Include="Common\StringToPageConverter.cs" />
     <Compile Include="Error.cs" />
@@ -130,6 +132,7 @@
     <Compile Include="Models\Error.cs" />
     <Compile Include="Models\Fx3GA.cs" />
     <Compile Include="Models\IO.cs" />
+    <Compile Include="Models\Result.cs" />
     <Compile Include="Models\SettingModel.cs" />
     <Compile Include="ViewModel\ErrorLogViewModel.cs" />
     <Compile Include="ViewModel\IOTableViewModel.cs" />
@@ -148,12 +151,19 @@
     <Compile Include="Views\PageMXComponent.xaml.cs">
       <DependentUpon>PageMXComponent.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Views\PageSerial.xaml.cs">
+      <DependentUpon>PageSerial.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Views\SettingView.xaml.cs">
       <DependentUpon>SettingView.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\WindowIOTable.xaml.cs">
       <DependentUpon>WindowIOTable.xaml</DependentUpon>
     </Compile>
+    <Page Include="Views\PageSerial.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Views\WindowIOTable.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -174,11 +184,6 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Languages\zh-cn.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Languages\zh-tw.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -270,7 +275,9 @@
       <Isolated>False</Isolated>
     </COMReference>
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Folder Include="Logs\" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>

@@ -6,6 +6,7 @@
         xmlns:local="clr-namespace:LayUp.Views"
         mc:Ignorable="d"
         Title="{DynamicResource MainWindowTitle}" Height="768" Width="1024" WindowStyle="SingleBorderWindow"
+        MinWidth="1024"
         xmlns:Common="clr-namespace:LayUp.Common"
         DataContext="{Binding Path=Main, Source={StaticResource Locator}}"
         Icon="/Images/TrayIcons/Monitor.ico"
@@ -21,6 +22,7 @@
         <Common:IntToStringConverter x:Key="IntToStringConverter1"/>
         <Common:MutilValueConverter x:Key="MutilValueConverter1"/>
         <Common:StringToPageConverter x:Key="StringToPageConverter1"/>
+        <Common:ReverseBoolConverter x:Key="ReverseBoolConverter"></Common:ReverseBoolConverter>
 
 
 
@@ -141,7 +143,16 @@
                 </Trigger>
             </ControlTemplate.Triggers>
         </ControlTemplate>
+        <!--#region dataGrid样式 -->
 
+        <Style x:Key="CenterAlignmentStyle" TargetType="{x:Type TextBlock}">
+            <Setter Property="TextWrapping" Value="Wrap"/>
+            <Setter Property="Height" Value="auto"/>
+            <Setter Property="TextAlignment" Value="Center"/>
+        </Style>
+
+
+        <!--#endregion-->
     </Window.Resources>
 
 
@@ -155,9 +166,11 @@
                         <MenuItem Header="English" Command="{Binding SwitchLangugeCommand}" CommandParameter="en"></MenuItem>
 
                     </MenuItem>
-                    <MenuItem Header="{DynamicResource Setting}"  Command="{Binding ShowViewCommand}" CommandParameter="View2"></MenuItem>
+                    <MenuItem Header="打印设置" Command="{Binding OpenPrintSetupCommand}" />
+                    <MenuItem Header="打印预览" Command="{Binding OpenPrintPreviewCommand}"/>
+                    <!--<MenuItem Header="{DynamicResource Setting}"  Command="{Binding ShowViewCommand}" CommandParameter="View2"></MenuItem>-->
                     <MenuItem Header="{DynamicResource IOTable}"  Command="{Binding ShowViewCommand}" CommandParameter="IOTable"></MenuItem>
-                    <MenuItem Header="{DynamicResource CustomError}" Command="{Binding ShowView2Command}"></MenuItem>
+                    <!--<MenuItem Header="{DynamicResource CustomError}" Command="{Binding ShowView2Command}"></MenuItem>-->
                 </MenuItem>
             </Menu>
         </Grid>
@@ -168,6 +181,8 @@
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="250" />
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="150" />
                             <ColumnDefinition Width="Auto" />
@@ -191,16 +206,21 @@
             <StatusBarItem Grid.Column="2" >
 
                 <!--通过使用Buttong的控件模板，使StatusBarItem可以单击-->
-                <Button Click="Button_Click"  >
+                <!--<Button  >
                     <Button.Template>
                         <ControlTemplate TargetType="{x:Type Button}">
                             <StackPanel Orientation="Horizontal" MinHeight="30" MinWidth="120" VerticalAlignment="Center">
                                 <TextBlock Text="{DynamicResource CurrentError}" VerticalAlignment="Center"></TextBlock>
-                                <TextBlock Foreground="Red" VerticalAlignment="Center" Name="lblCursorPosition" Text="{Binding  LayupPLC.ErrorCode}" />
+                                <TextBlock Foreground="Red" VerticalAlignment="Center" Name="lblCursorPosition" Text="{Binding ErrorCode}" />
                             </StackPanel>
                         </ControlTemplate>
                     </Button.Template>
-                </Button>
+                </Button>-->
+                <StackPanel Orientation="Horizontal" >
+                    <TextBlock Text="检测台返回值："></TextBlock>
+                    <TextBlock Text="{Binding SerialReceviedValue, Mode=OneWay}" />
+                </StackPanel>
+
 
 
 
@@ -208,7 +228,7 @@
             <Separator Grid.Column="3" />
             <StatusBarItem Grid.Column="4">
                 <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="{DynamicResource ConnectionStatus}"></TextBlock>
+                    <TextBlock Text="PLC连接状态:  "></TextBlock>
                     <TextBlock  Name="lblCursorPosition1" Text="{Binding LayupPLC.IsConnected, Converter={StaticResource BoolToStringConverter1}}" />
                 </StackPanel>
 
@@ -217,31 +237,38 @@
             <Separator Grid.Column="5" />
             <StatusBarItem Grid.Column="6">
                 <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="{DynamicResource Revision}"></TextBlock>
-                    <TextBlock Text="1.00" Name="txtAssemblyVersion"></TextBlock>
+                    <TextBlock Text="串口连接状态: "></TextBlock>
+                    <TextBlock Text="{ Binding IsSerialPortConnected, Mode=OneWay}"></TextBlock>
                 </StackPanel>
             </StatusBarItem>
-            <Separator Grid.Column="7"></Separator>
+            <Separator Grid.Column="7" />
             <StatusBarItem Grid.Column="8">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="打印机状态: "></TextBlock>
+                    <TextBlock Text="{ Binding PrinterStatus, Mode=OneWay}"></TextBlock>
+                </StackPanel>
+            </StatusBarItem>
+            <Separator Grid.Column="9"></Separator>
+            <StatusBarItem Grid.Column="10">
                 <TextBlock Name="TxtCurrentTime"  HorizontalAlignment="Center"  Height="16" />
             </StatusBarItem>
         </StatusBar>
         <!--显示区-->
         <Grid DockPanel.Dock="Top" >
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="4*"/>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="8*"/>
+                <ColumnDefinition Width="2*"/>
+                <ColumnDefinition Width="2*"/>
             </Grid.ColumnDefinitions>
             <!--#region 主显示区-->
             <Grid Grid.Column="0">
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="3*"/>
                     <RowDefinition Height="5*"/>
+                    <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
                 <!--图形显示区-->
-                <GroupBox Header="{DynamicResource GlassInDiagram}" Margin="0,0,0,0">
-                    <Canvas Margin="0,0,0,0"  >
+                <GroupBox Header="{DynamicResource ReceivedDataDiagram}" Margin="0,0,0,0">
+                    <!--<Canvas Margin="0,0,0,0"  >
                         <Rectangle Fill="#FF2BE22B" Width="600" Height="20" Panel.ZIndex="2" Canvas.Left="13" Canvas.Top="13"/>
                         <Rectangle Fill="#FF2BE22B" Width="600" Height="20" Panel.ZIndex="2" RenderTransformOrigin="0.497,-1.842" Canvas.Left="15" Canvas.Top="166"/>
                         <Rectangle  StrokeThickness="1" Stroke="Black" Height="186" Width="8" Canvas.Left="29" Panel.ZIndex="1" Canvas.Top="8"/>
@@ -272,19 +299,55 @@
                         </Grid>
 
 
-                    </Canvas>
+                    </Canvas>-->
+                    <!--
+                                    Margin="10"  
+                                     
+                               
+                      -->
+                    <Grid Grid.Row="1" >
+                        <DataGrid  x:Name="dg2" CanUserAddRows="False"  AllowDrop="True" IsReadOnly="True" CanUserReorderColumns="False"
+                                   ItemsSource="{Binding Results, Mode=TwoWay, IsAsync=True,UpdateSourceTrigger=PropertyChanged}" 
+                                   AutomationProperties.IsRowHeader="True"    EnableRowVirtualization="True"
+                                   EnableColumnVirtualization="True" SelectionUnit="FullRow"  SelectionMode="Single"  
+                                    CanUserSortColumns="False" CanUserResizeColumns="False" AutoGenerateColumns="False"
+                                    >
+                            <DataGrid.Columns>
+                                <DataGridTextColumn  Header="序号"  Binding="{Binding Index }" Width="100" ElementStyle="{StaticResource CenterAlignmentStyle}" />
+                                <DataGridTextColumn Header="时间" Binding="{Binding dateTime}" Width="200" ElementStyle="{StaticResource CenterAlignmentStyle}" />
+                                <DataGridTextColumn Header="结果数据"  Binding="{Binding ResultValue}" Width="100" ElementStyle="{StaticResource CenterAlignmentStyle}" />
+                                <DataGridTextColumn Header=" 判定数据"  Binding="{Binding IsOk}" Width="100" ElementStyle="{StaticResource CenterAlignmentStyle}" >
+
+                                </DataGridTextColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Grid>
 
                 </GroupBox>
-                <Grid Grid.Row="1"  Margin="0,0,-0.4,0" >
-                    <!--输入输出信号显示-->
+                <Button x:Name="button1" Content="清空数据" HorizontalAlignment="Left" Height="28.5" Margin="508.3,50.267,0,0" Grid.Row="1" VerticalAlignment="Top" Width="97.5" Command="{Binding ClearReceviedDataCommand}"/>
+
+                <!--<Button x:Name="button" Content="打印" HorizontalAlignment="Left" Height="31.2" Margin="534.8,36.467,0,0" Grid.Row="1" VerticalAlignment="Top" Width="95.6" IsCancel="True" Command="{Binding PrintCommand}" IsEnabled="{Binding IsAutoPrint, Converter={StaticResource ReverseBoolConverter}}"/>-->
+                <!--<Grid Grid.Row="1"  Margin="0,0,-0.4,0" >
+                    -->
+                <!--输入输出信号显示-->
+                <!--
                     <GroupBox Header="{DynamicResource IOSignal}" Margin="0,0,0,0">
                         <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="46*"/>
+                                <ColumnDefinition Width="21*"/>
+                                <ColumnDefinition Width="38*"/>
+                                <ColumnDefinition Width="261*"/>
+                                <ColumnDefinition Width="300*"/>
+                            </Grid.ColumnDefinitions>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="3*"/>
                                 <RowDefinition Height="5*"/>
                             </Grid.RowDefinitions>
-                            <!--输入信号显示-->
-                            <GroupBox Header="{DynamicResource InputSignal}" Grid.Row="0" Margin="10,0,10,4"  >
+                            -->
+                <!--输入信号显示-->
+                <!--
+                            <GroupBox Header="{DynamicResource InputSignal}" Grid.Row="0" Margin="10,0,10,4" Grid.ColumnSpan="5"  >
                                 <Grid>
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="1*"/>
@@ -348,8 +411,10 @@
 
                                 </Grid>
                             </GroupBox>
-                            <!--输出信号显示-->
-                            <GroupBox Header="{DynamicResource OutputSignal}" Grid.Row="1" Margin="10,0,10,4"  >
+                            -->
+                <!--输出信号显示-->
+                <!--
+                            <GroupBox Header="{DynamicResource OutputSignal}" Grid.Row="1" Margin="10,0,10,4" Grid.ColumnSpan="5"  >
                                 <Grid>
                                     <Grid.RowDefinitions>
                                         <RowDefinition/>
@@ -481,15 +546,17 @@
                     </GroupBox>
 
 
-                    <!--<TextBox x:Name="textBox" HorizontalAlignment="Left" Height="23" TextWrapping="Wrap"  VerticalAlignment="Top" Width="120"  Text="{Binding LayupPLC.StationNumber}"/>
+                    -->
+                <!--<TextBox x:Name="textBox" HorizontalAlignment="Left" Height="23" TextWrapping="Wrap"  VerticalAlignment="Top" Width="120"  Text="{Binding LayupPLC.StationNumber}"/>
                 <CheckBox IsChecked="{Binding Path=LayupPLC.Input000, Converter={StaticResource IntToBoolConverter1}}" Content="X000" ></CheckBox>
                 <Button Content="{Binding Path=LayupPLC.IsConnected, Converter={StaticResource BoolToStringConverter1}}"  Command="{Binding ConnectCommand}" CommandParameter="{Binding LayupPLC.IsConnected ,Mode=TwoWay}"></Button>
                 -->
-                    <!--<ToggleButton Content="Y000" Height="50" Width=" 200" Command="{Binding SwitchOutputCommand}" IsChecked="{Binding Path=LayupPLC.Output000, Mode=OneWayToSource, Converter={StaticResource IntToBoolConverter2}}" CommandParameter="Y000" Margin="471,128,122.6,242"></ToggleButton>-->
-                    <!--<ToggleButton Content="Y000" Height="50" Width=" 200" Command="{Binding SwitchOutputCommand}" IsChecked="True" CommandParameter="Y000" Margin="308,237,285.6,133"></ToggleButton>-->
-                    <!--
+                <!--<ToggleButton Content="Y000" Height="50" Width=" 200" Command="{Binding SwitchOutputCommand}" IsChecked="{Binding Path=LayupPLC.Output000, Mode=OneWayToSource, Converter={StaticResource IntToBoolConverter2}}" CommandParameter="Y000" Margin="471,128,122.6,242"></ToggleButton>-->
+                <!--<ToggleButton Content="Y000" Height="50" Width=" 200" Command="{Binding SwitchOutputCommand}" IsChecked="True" CommandParameter="Y000" Margin="308,237,285.6,133"></ToggleButton>-->
+                <!--
                 <Button Content="断开" Command="{Binding StopMonitorCommand}"  ></Button>-->
-                </Grid>
+                <!--
+                </Grid>-->
             </Grid>
             <!--#endregion-->
 
@@ -516,35 +583,41 @@
                             <RowDefinition/>
                             <RowDefinition/>
                             <RowDefinition/>
+                            <RowDefinition/>
+                            <RowDefinition/>
                         </Grid.RowDefinitions>
-                        <TextBlock Text="进玻璃到位延时" Grid.Row="0" VerticalAlignment="Center" />
-                        <TextBox x:Name="txtData200" Text="{Binding LayupPLC.Data200, Mode=OneWay, Converter={StaticResource IntToStringConverter1  }}" IsEnabled="{Binding LayupPLC.IsConnected}" HorizontalAlignment="Right" Grid.Row="1" VerticalAlignment="Center" Height="20" MinWidth="80"/>
-                        <TextBlock  Text="进玻璃超时" Grid.Row="2" VerticalAlignment="Center" />
-                        <TextBox  x:Name="txtData201" Text="{Binding LayupPLC.Data201, Mode=OneWay, Converter={StaticResource IntToStringConverter1  }}" IsEnabled="{Binding LayupPLC.IsConnected}"  HorizontalAlignment="Right" Grid.Row="3" VerticalAlignment="Center" Height="20" MinWidth="80"/>
-                        <TextBlock Text="排版机进玻璃超时" Grid.Row="4" VerticalAlignment="Center" />
-                        <TextBox  x:Name="txtData202" Text="{Binding LayupPLC.Data202, Mode=OneWay, Converter={StaticResource IntToStringConverter1  }}" IsEnabled="{Binding LayupPLC.IsConnected}" HorizontalAlignment="Right" Grid.Row="5" VerticalAlignment="Center" Height="20" MinWidth="80"/>
-                        <TextBlock Text="D210" Grid.Row="6" VerticalAlignment="Center" />
-                        <TextBox  x:Name="txtData210" Text="{Binding LayupPLC.Data210, Mode=OneWay, Converter={StaticResource IntToStringConverter1  }}" IsEnabled="{Binding LayupPLC.IsConnected}"  HorizontalAlignment="Right" Grid.Row="7" VerticalAlignment="Center" Height="20" MinWidth="80"/>
-                        <TextBlock Text="D211" Grid.Row="8" VerticalAlignment="Center" />
-                        <TextBox  x:Name="txtData211" Text="{Binding LayupPLC.Data211, Mode=OneWay, Converter={StaticResource IntToStringConverter1  }}" IsEnabled="{Binding LayupPLC.IsConnected}" HorizontalAlignment="Right" Grid.Row="9" VerticalAlignment="Center" Height="20" MinWidth="80"/>
-                        <TextBlock Text="D212" Grid.Row="10" VerticalAlignment="Center" />
-                        <TextBox  x:Name="txtData212" Text="{Binding LayupPLC.Data212, Mode=OneWay, Converter={StaticResource IntToStringConverter1  }}" IsEnabled="{Binding LayupPLC.IsConnected}" HorizontalAlignment="Right" Grid.Row="11" VerticalAlignment="Center" Height="20" MinWidth="80"/>
-                        <Button Command="{Binding WriteDataCommand}" Content="{DynamicResource Conform}" IsEnabled="{Binding LayupPLC.IsConnected}" Grid.Row="12" Grid.RowSpan="2" Margin="10" >
+                        <TextBlock Text="原点拍照点距离" Grid.Row="0" VerticalAlignment="Center" />
+                        <TextBox x:Name="txtData224" Text="{Binding LayupPLC.Data224, Mode=OneWay, Converter={StaticResource IntToStringConverter1  }}" IsEnabled="{Binding LayupPLC.IsConnected}" HorizontalAlignment="Right" Grid.Row="1" VerticalAlignment="Center" Height="20" MinWidth="80" />
+                        <TextBlock  Text="工件间隔" Grid.Row="2" VerticalAlignment="Center" />
+                        <TextBox  x:Name="txtData232" Text="{Binding LayupPLC.Data232, Mode=OneWay, Converter={StaticResource IntToStringConverter1  }}" IsEnabled="{Binding LayupPLC.IsConnected}"  HorizontalAlignment="Right" Grid.Row="3" VerticalAlignment="Center" Height="20" MinWidth="80" />
+                        <TextBlock Text="前进速度" Grid.Row="4" VerticalAlignment="Center" />
+                        <TextBox  x:Name="txtData234" Text="{Binding LayupPLC.Data234, Mode=OneWay, Converter={StaticResource IntToStringConverter1  }}" IsEnabled="{Binding LayupPLC.IsConnected}" HorizontalAlignment="Right" Grid.Row="5" VerticalAlignment="Bottom" Height="20" MinWidth="80" />
+                        <TextBlock Text="复位速度" Grid.Row="6" VerticalAlignment="Center" />
+                        <TextBox  x:Name="txtData228" Text="{Binding LayupPLC.Data228, Mode=OneWay, Converter={StaticResource IntToStringConverter1  }}" IsEnabled="{Binding LayupPLC.IsConnected}"  HorizontalAlignment="Right" Grid.Row="7" VerticalAlignment="Center" Height="20" MinWidth="80" />
+                        <TextBlock Text="爬行速度" Grid.Row="8" VerticalAlignment="Center" />
+                        <TextBox  x:Name="txtData226" Text="{Binding LayupPLC.Data226, Mode=OneWay, Converter={StaticResource IntToStringConverter1  }}" IsEnabled="{Binding LayupPLC.IsConnected}" HorizontalAlignment="Right" Grid.Row="9" VerticalAlignment="Center" Height="20" MinWidth="80"/>
+                        <TextBlock Text="原点回归开始速度" Grid.Row="10" VerticalAlignment="Center" />
+                        <TextBox  x:Name="txtData230" Text="{Binding LayupPLC.Data230, Mode=OneWay, Converter={StaticResource IntToStringConverter1  }}" IsEnabled="{Binding LayupPLC.IsConnected}" HorizontalAlignment="Right" Grid.Row="11" VerticalAlignment="Center" Height="20" MinWidth="80" />
+                        <TextBlock Text="工件数量" Grid.Row="12" VerticalAlignment="Center" />
+                        <TextBox  x:Name="txtData236" Text="{Binding LayupPLC.Data236, Mode=OneWay, Converter={StaticResource IntToStringConverter1  }}" IsEnabled="{Binding LayupPLC.IsConnected}" HorizontalAlignment="Right" Grid.Row="13" VerticalAlignment="Center" Height="20" MinWidth="80" />
+
+                        <Button Command="{Binding WriteDataCommand}" Content="{DynamicResource Conform}" IsEnabled="{Binding LayupPLC.IsConnected}" Grid.Row="14" Grid.RowSpan="2" Margin="10" >
                             <Button.CommandParameter>
                                 <MultiBinding Converter="{StaticResource MutilValueConverter1}">
-                                    <Binding Path="Text" ElementName="txtData200"/>
-                                    <Binding Path="Text" ElementName="txtData201"/>
-                                    <Binding Path="Text" ElementName="txtData202"/>
-                                    <Binding Path="Text" ElementName="txtData210"/>
-                                    <Binding Path="Text" ElementName="txtData211"/>
-                                    <Binding Path="Text" ElementName="txtData212"/>
+                                    <Binding Path="Text" ElementName="txtData224"/>
+                                    <Binding Path="Text" ElementName="txtData226"/>
+                                    <Binding Path="Text" ElementName="txtData228"/>
+                                    <Binding Path="Text" ElementName="txtData230"/>
+                                    <Binding Path="Text" ElementName="txtData232"/>
+                                    <Binding Path="Text" ElementName="txtData234"/>
+                                    <Binding Path="Text" ElementName="txtData236"/>
 
                                 </MultiBinding>
                             </Button.CommandParameter>
                         </Button>
                     </Grid>
                 </GroupBox>
-                <GroupBox Header="{DynamicResource LineDirectionSetting}" Grid.Row="1">
+                <!--<GroupBox Header="{DynamicResource LineDirectionSetting}" Grid.Row="1">
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition/>
@@ -583,24 +656,26 @@
                                 <TextBlock Text=""/>
                             </StackPanel>
                         </Button>
-                        <!--<Button MaxHeight="40" Grid.Row="0" Content="左进玻璃切换(M231M)"/>-->
-                        <!--
+                        -->
+                <!--<Button MaxHeight="40" Grid.Row="0" Content="左进玻璃切换(M231M)"/>-->
+                <!--
                         <Button MaxHeight="40" Grid.Row="1" Content="左玻璃切换传出开启"/>
                         <Button MaxHeight="40" Grid.Row="2" Content="(M233M)"/>
                         <Button MaxHeight="40" Grid.Row="3" Content="(M234M)"/>
                         <Button MaxHeight="40" Grid.Row="4" Content="(M235M)"/>-->
+                <!--
 
                     </Grid>
-                </GroupBox>
+                </GroupBox>-->
             </Grid>
             <!--#endregion-->
             <!--侧边栏-->
             <Grid Grid.Column="2">
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="199*"/>
-                    <RowDefinition Height="155*"/>
+                    <RowDefinition Height="59*"/>
+                    <RowDefinition Height="167*"/>
                 </Grid.RowDefinitions>
-                <StackPanel Margin="0,0,-0.4,0" Grid.RowSpan="2">
+                <StackPanel Margin="0,0,-0.4,0" Grid.Row="0">
                     <Grid >
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="1*"/>
@@ -608,15 +683,15 @@
                         </Grid.ColumnDefinitions>
 
                         <TextBlock FontSize="13" VerticalAlignment="Bottom" TextAlignment="Center" Grid.Column="0" Grid.Row="0" Text="{DynamicResource ConnectionType}" Grid.ColumnSpan="2" Margin="0,0,112.6,2.4"  ></TextBlock>
-                        <ComboBox    HorizontalAlignment="Center"  MinWidth="100"  Grid.Column="1" Grid.Row="0"  FontSize="12"  SelectedIndex="0"  Height="22" VerticalAlignment="Bottom"  >
-                            <ComboBoxItem Content="ModbusTCP" IsSelected="True" >
+                        <ComboBox   IsEnabled="{Binding LayupPLC.IsConnected ,Converter={StaticResource ReverseBoolConverter}}" HorizontalAlignment="Center"  MinWidth="100"  Grid.Column="1" Grid.Row="0"  FontSize="12"  SelectedIndex="0"  Height="22" VerticalAlignment="Bottom"  >
+                            <!--<ComboBoxItem Content="ModbusTCP" IsSelected="True" >
                                 <i:Interaction.Triggers>
                                     <i:EventTrigger EventName="Selected">
                                         <command:EventToCommand Command="{Binding ChangeConnectionTypeCommand  }" CommandParameter="ModbusTCP" />
 
                                     </i:EventTrigger>
                                 </i:Interaction.Triggers>
-                            </ComboBoxItem>
+                            </ComboBoxItem>-->
                             <ComboBoxItem Content="MX Component" >
                                 <i:Interaction.Triggers>
                                     <i:EventTrigger EventName="Selected">
@@ -631,26 +706,80 @@
                     </Grid>
 
                     <GroupBox Header="{DynamicResource InformationOfPLC}" Name="GrpPLC" >
-                        <Frame
-                    x:Name="Frame"
-                   
-                    NavigationUIVisibility="Hidden" Content="{Binding LayupPLC.ConnectionMethod,Converter={StaticResource StringToPageConverter1}}" />
+                        <Frame x:Name="Frame" NavigationUIVisibility="Hidden" Content="{Binding LayupPLC.ConnectionMethod,Converter={StaticResource StringToPageConverter1}}" />
                     </GroupBox>
                     <Grid Margin="0,10,0,10">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition/>
-                            <ColumnDefinition/>
+                            <ColumnDefinition Width="53*"/>
+                            <ColumnDefinition Width="32*"/>
+                            <ColumnDefinition Width="85*"/>
                         </Grid.ColumnDefinitions>
-                        <Button  Content="{DynamicResource Connect}" Command="{Binding ConnectCommand}" IsEnabled="{Binding LayupPLC.IsDisConnected, Mode=OneWay}"  Width="80" Height="29" />
-                        <Button Grid.Column="1" Content="{DynamicResource Disconnect}" Command="{Binding StopMonitorCommand}"  IsEnabled="{Binding LayupPLC.IsConnected}"  Width="80" />
+                        <Button  Content="{DynamicResource Connect}" Command="{Binding ConnectCommand}"   Width="80" Height="29" Margin="2,0,2.8,-0.2" VerticalAlignment="Bottom" Grid.ColumnSpan="2"  />
+                        <Button x:Name="Button1" Grid.Column="2" Content="{DynamicResource Disconnect}"  Command="{Binding StopMonitorCommand}"  Width="80" Margin="2.2,0,2.6,-0.2" />
 
 
                     </Grid>
                 </StackPanel>
+                <StackPanel Margin="0,10,-0.4,414" Grid.Row="1">
+                    <Grid >
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="1*"/>
+                            <ColumnDefinition Width="2*"/>
+                        </Grid.ColumnDefinitions>
 
+                        <TextBlock FontSize="13" VerticalAlignment="Bottom" TextAlignment="Center" Grid.Column="0" Grid.Row="0" Text="串口" Grid.ColumnSpan="2" Margin="0,0,112.6,2.4"  ></TextBlock>
+                        <ComboBox x:Name="comboBox1" ItemsSource="{Binding SerialPorts}" SelectedItem="{Binding SerialPortName}"   IsEnabled="{Binding IsSerialPortConnected ,Converter={StaticResource ReverseBoolConverter}}" HorizontalAlignment="Center"  MinWidth="100"  Grid.Column="1" Grid.Row="0"  FontSize="12"  SelectedIndex="0"  Height="22" VerticalAlignment="Bottom"  >
+                            <i:Interaction.Triggers>
+                                <i:EventTrigger EventName="SelectionChanged">
+                                    <command:EventToCommand Command="{Binding ChangeSerialPortCommand  }" CommandParameter="{Binding SelectedItem, ElementName=comboBox1}" />
+
+                                </i:EventTrigger>
+                            </i:Interaction.Triggers>
+
+
+                        </ComboBox>
+
+                    </Grid>
+
+                    <!--<GroupBox Header="串口信息"  >
+                        <Frame  NavigationUIVisibility="Hidden" Content="" Source="/LayUp;component/Views/PageSerial.xaml" />
+                    </GroupBox>-->
+                    <Grid Margin="0,10,0,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="53*"/>
+                            <ColumnDefinition Width="32*"/>
+                            <ColumnDefinition Width="85*"/>
+                        </Grid.ColumnDefinitions>
+                        <Button  Content="连接串口" Command="{Binding OpenSerialPortCommand}"   Width="80" Height="29" Margin="2,0,2.8,-0.2" VerticalAlignment="Bottom" Grid.ColumnSpan="2"  />
+                        <Button  Grid.Column="2" Content="断开串口" Command="{Binding CloseSerialPortCommand}"  Width="80" Margin="2.2,0,2.6,-0.2" />
+
+
+                    </Grid>
+                </StackPanel>
+                <Button Command="{Binding PrintCommand}"  x:Name="button" Content="打印" HorizontalAlignment="Left" Height="31.2" Margin="64,250.496,0,0" Grid.Row="1" VerticalAlignment="Top" Width="95.6"  IsEnabled="{Binding IsAutoPrint, Converter={StaticResource ReverseBoolConverter}}"/>
+                <CheckBox x:Name="checkBox" Content="自动打印" HorizontalAlignment="Left" Height="26.8" Margin="70.5,219.196,0,0" Grid.Row="1" VerticalAlignment="Top" Width="74.4" IsChecked="{Binding IsAutoPrint}" RenderTransformOrigin="0.5,0.5">
+                    <CheckBox.RenderTransform>
+                        <TransformGroup>
+                            <ScaleTransform/>
+                            <SkewTransform AngleX="2.981"/>
+                            <RotateTransform/>
+                            <TranslateTransform X="0.698"/>
+                        </TransformGroup>
+                    </CheckBox.RenderTransform>
+                </CheckBox>
+                <ComboBox x:Name="comboBox" IsEnabled="{Binding IsAutoPrint ,Converter={StaticResource ReverseBoolConverter}}" HorizontalAlignment="Left" Height="26.8" Margin="10,176.896,0,0" Grid.Row="1" VerticalAlignment="Top" Width="149.6" ItemsSource="{Binding Printers}" Text="{Binding SelectedPrinterName}">
+                    <i:Interaction.Triggers>
+                        <i:EventTrigger EventName="SelectionChanged">
+                            <command:EventToCommand Command="{Binding ChangePrinterCommand  }" CommandParameter="{Binding SelectedItem, ElementName=comboBox}" />
+
+                        </i:EventTrigger>
+                    </i:Interaction.Triggers>
+                </ComboBox>
+                <Label x:Name="textBox" HorizontalAlignment="Left" Height="26.8" Margin="72,145.096,0,0" Content="选择打印机" VerticalAlignment="Top" Width="87.6" Grid.Row="1" RenderTransformOrigin="1.311,0.369"/>
 
 
             </Grid>
+
 
             <tb:TaskbarIcon x:Name="myNotifyIcon"
                     Visibility="Visible"
@@ -661,7 +790,7 @@
                    
                     PopupActivation="DoubleClick">
                 <tb:TaskbarIcon.ContextMenu >
-                    <ContextMenu Background="LightCoral" MenuItem.Click="ContextMenu_Click" >
+                    <ContextMenu Background="White" MenuItem.Click="ContextMenu_Click" >
                         <MenuItem Tag="MenuNormal"  Header="{DynamicResource iconTrayOpen}"/>
                         <MenuItem Tag="MenuMin" Header="最小化"/>
                         <MenuItem Tag="MenuClose" Header="{DynamicResource iconTrayExit}"/>

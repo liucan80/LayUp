@@ -13,8 +13,9 @@ namespace LayUp.Common
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
+            
             object a = (value as string);
-            if (a=="ModbusTCP")
+            if ((string)a=="ModbusTCP")
             {
                 return PageManager.PageModbusTCP;
             }

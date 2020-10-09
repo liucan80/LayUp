@@ -4,11 +4,15 @@
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       xmlns:local="clr-namespace:LayUp.Views"
+      xmlns:Common="clr-namespace:LayUp.Common"
+
       mc:Ignorable="d" 
       d:DesignHeight="450" d:DesignWidth="800"
       DataContext="{Binding Main,Source={StaticResource Locator}}"
       Title="PageModbusTCP">
-
+<Page.Resources>
+    <Common:ReverseBoolConverter x:Key="ReverseBoolConverter"></Common:ReverseBoolConverter>
+</Page.Resources>
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="1*" />
@@ -19,12 +23,12 @@
             <RowDefinition/>
         </Grid.RowDefinitions>
         <TextBlock VerticalAlignment="Center" TextAlignment="Center" Grid.Column="0" Grid.Row="0" Text="{DynamicResource IpAddress }"  ></TextBlock>
-        <ComboBox Margin="5" HorizontalAlignment="Center" VerticalAlignment="Center"  MinWidth="100"  Grid.Column="1" Grid.Row="0" IsEnabled="{Binding LayupPLC.IsDisConnected}"  FontSize="12" >
-            <ComboBoxItem Content="{Binding LayupPLC.IpAddress, Mode=OneWay}" IsSelected="True"/>
-            <ComboBoxItem Content="2"/>
-            <ComboBoxItem Content="3"/>
-        </ComboBox>
-        <TextBlock  VerticalAlignment="Center" TextAlignment="Center" Grid.Column="0" Grid.Row="1" Text="{DynamicResource port}"  />
+        <!--<ComboBox Margin="5" HorizontalAlignment="Center" VerticalAlignment="Center"  MinWidth="100" SelectedItem="{Binding LayupPLC.IpAddress,Mode=OneWay}"  Grid.Column="1" Grid.Row="0" IsEnabled="{Binding LayupPLC.IsDisConnected}"  FontSize="12" IsEditable="True">
+            <ComboBoxItem Content="127.0.0.1" IsSelected="True" />
+            <ComboBoxItem Content="192.168.199.158"/>
+        </ComboBox>-->
+        <TextBox Text="{Binding LayupPLC.IpAddress, UpdateSourceTrigger=LostFocus}" Grid.Column="1" Grid.Row="0" ></TextBox>
+        <TextBlock  VerticalAlignment="Center" TextAlignment="Center" Grid.Column="0" Grid.Row="1" Text="{DynamicResource port}" IsEnabled="{Binding LayupPLC.IsConnected,Converter={StaticResource ReverseBoolConverter}}" />
         <TextBox Margin="5"  HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center"  MinWidth="50"  Grid.Column="1" Grid.Row="1" Text="{Binding LayupPLC.Port, Mode=OneWay}" IsReadOnly="True" FontSize="12" ></TextBox>
 
     </Grid>

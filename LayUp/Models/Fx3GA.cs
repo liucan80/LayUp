@@ -20,7 +20,7 @@ namespace LayUp.Models
        
         
         //PLC连接方式
-        private String _connectionMethod="ModbusTCP";
+        private String _connectionMethod="MXComponent";
         public String ConnectionMethod
         {
             get { return _connectionMethod; }
@@ -58,18 +58,18 @@ namespace LayUp.Models
             {
                // _isConnected = value;
                 Set(ref _isConnected, value);
-                _isDisConnected = !value;
+              //  _isDisConnected = !value;
                // Set(ref _isDisConnected, !value);
 
 
             }
         }
-        //PLC的连接状态  断开时为真
-        private bool? _isDisConnected = true;
+       // PLC的连接状态 断开时为真
+        private bool? _isDisConnected;
 
         public bool? IsDisConnected
         {
-            get { return !_isConnected; }
+            get { return !IsConnected; }
             set
             {
                 // _isConnected = value;
@@ -111,7 +111,7 @@ namespace LayUp.Models
         }
 
         //ErrorCode
-        private string _errorCode="无";
+        private string _errorCode;
         public string ErrorCode
         {
             get { return _errorCode; }
@@ -579,10 +579,86 @@ namespace LayUp.Models
                 Set(ref _data212, value);
             }
         }
+
+        private int? _data222;
+        public int? Data222 
+        { 
+            get { return _data222; }
+            set { Set(ref _data222, value); }
+        }
+        private int? _data224;
+
+        public int? Data224
+        {
+            get { return _data224; }
+            set
+            {
+                Set(ref _data224, value);
+            }
+        }
+        private int? _data226;
+
+        public int? Data226
+        {
+            get { return _data226; }
+            set
+            {
+                Set(ref _data226, value);
+            }
+        }
+        private int? _data228;
+
+        public int? Data228
+        {
+            get { return _data228; }
+            set
+            {
+                Set(ref _data228, value);
+            }
+        }
+        private int? _data230;
+
+        public int? Data230
+        {
+            get { return _data230; }
+            set
+            {
+                Set(ref _data230, value);
+            }
+        }
+        private int? _data232;
+
+        public int? Data232
+        {
+            get { return _data232; }
+            set
+            {
+                Set(ref _data232, value);
+            }
+        }
+        private int? _data234;
+
+        public int? Data234
+        {
+            get { return _data234; }
+            set
+            {
+                Set(ref _data234, value);
+            }
+        }
+        private int? _data236;
+        public int? Data236
+        {
+            get { return _data236; }
+            set
+            {
+                Set(ref _data236, value);
+            }
+        }
         #endregion
 
         #region M寄存器
-      
+
         private int? _M128;
         public int? M128
         {
@@ -779,6 +855,8 @@ namespace LayUp.Models
                 Set(ref _M235, value);
             }
         }
+
+       
         #endregion
     }
 }

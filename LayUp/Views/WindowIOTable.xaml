@@ -6,31 +6,39 @@
         xmlns:local="clr-namespace:LayUp.Views"
     
         mc:Ignorable="d"
-        Title="PLC IO表" Height="450" Width="301.918">
-    
-      
-        <StackPanel Margin="0,1,10.2,49" Orientation="Vertical" >
-            <TextBlock Text="PLC IO表" FontWeight="Bold" FontSize="12" Margin="0,5,0,5" />
-            <DockPanel >
-                <StackPanel DockPanel.Dock="Left" >
-                    <DataGrid x:Name="dg1"  AutoGenerateColumns="False" CanUserAddRows="False" 
-                                      CanUserSortColumns="False" Margin="10" AllowDrop="True" IsReadOnly="True" >
-                        <DataGrid.Columns>
-                            <DataGridTextColumn Header="软原件" Binding="{Binding Register}" Width="100" />
-                            <DataGridTextColumn Header="名称"  Binding="{Binding Description}" Width="425" >
-                                <DataGridTextColumn.ElementStyle>
-                                    <Style TargetType="{x:Type TextBlock}">
-                                        <Setter Property="TextWrapping" Value="Wrap"/>
-                                        <Setter Property="Height" Value="auto"/>
-                                    </Style>
-                                </DataGridTextColumn.ElementStyle>
-                            </DataGridTextColumn>
-                        </DataGrid.Columns>
-                    </DataGrid>
-                </StackPanel>
+        Title="{DynamicResource IOTable}" Height="450" Width="301.918">
 
-               
-            </DockPanel>
-        </StackPanel>
-    
+
+    <Grid Margin="0,1,10.2,49" >
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="121*"/>
+            <ColumnDefinition Width="164*"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="30"></RowDefinition>
+            <RowDefinition></RowDefinition>
+        </Grid.RowDefinitions>
+        <TextBlock Text="{DynamicResource IOTable }" FontWeight="Bold" FontSize="12" Margin="0,5,0,4.4" Grid.ColumnSpan="2" />
+
+        <Grid Grid.ColumnSpan="2" Margin="0,30,0,0.4" Grid.RowSpan="2" >
+            <DataGrid x:Name="dg1"  AutoGenerateColumns="False" CanUserAddRows="False" 
+                                  ScrollViewer.VerticalScrollBarVisibility="Visible"    CanUserSortColumns="False" Margin="10" AllowDrop="True" IsReadOnly="True" CanUserReorderColumns="False" SelectionMode="Single" SelectionUnit="Cell" CanUserResizeRows="False" >
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="软原件" Binding="{Binding Register}" Width="100" />
+                    <DataGridTextColumn Header="名称"  Binding="{Binding Description}" Width="425" >
+                        <DataGridTextColumn.ElementStyle>
+                            <Style TargetType="{x:Type TextBlock}">
+                                <Setter Property="TextWrapping" Value="Wrap"/>
+                                <Setter Property="Height" Value="auto"/>
+                            </Style>
+                        </DataGridTextColumn.ElementStyle>
+                    </DataGridTextColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+        </Grid>
+
+
+
+    </Grid>
+
 </Window>

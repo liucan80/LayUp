@@ -11,6 +11,8 @@
     <system:String x:Key="Setting">Setting</system:String>
     <system:String x:Key="IOTable">PLC IO Table</system:String>
     <system:String x:Key="CustomError">Custom Error</system:String>
+    <system:String x:Key="ReceivedDataDiagram">接收数据</system:String>
+
     <system:String x:Key="GlassInDiagram">GlassIn Diagram</system:String>
     <system:String x:Key="IOSignal">IO Signal</system:String>
     <system:String x:Key="InputSignal">Input Signal</system:String>
@@ -26,10 +28,12 @@
     <system:String x:Key="Port">Port:</system:String>
     <system:String x:Key="StationNumber">StationNumber</system:String>
     <system:String x:Key="PLCType">PLC Type</system:String>
-    <system:String x:Key="Connect">Connect</system:String>
-    <system:String x:Key="Disconnect">Disconnect</system:String>
+    <system:String x:Key="Connect">ConnectPLC</system:String>
+    <system:String x:Key="Disconnect">DisconnectPLC</system:String>
     <system:String x:Key="Conform">Conform</system:String>
     <system:String x:Key="LineDirectionSetting">DirectionSetting</system:String>
+    <system:String x:Key="InitErrorCode">None</system:String>
+
 
     <!--Setting General-->
     <system:String x:Key="wox_settings">Wox Settings</system:String>
