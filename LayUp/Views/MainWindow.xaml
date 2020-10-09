@@ -9,7 +9,7 @@
         MinWidth="1024"
         xmlns:Common="clr-namespace:LayUp.Common"
         DataContext="{Binding Path=Main, Source={StaticResource Locator}}"
-        Icon="/Images/TrayIcons/Monitor.ico"
+        Icon="/Images/TrayIcons/TM3001.ico"
          xmlns:tb="http://www.hardcodet.net/taskbar"
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
@@ -783,8 +783,8 @@
 
             <tb:TaskbarIcon x:Name="myNotifyIcon"
                     Visibility="Visible"
-                    ToolTipText="Fallback ToolTip for Windows xp"
-                    IconSource="/Images/TrayIcons/Monitor.ico"
+                    ToolTipText="检测台"
+                    IconSource="/Images/TrayIcons/TM3001.ico"
                     
                     MenuActivation="LeftOrRightClick"
                    

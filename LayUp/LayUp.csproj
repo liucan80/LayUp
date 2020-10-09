@@ -178,6 +178,7 @@
     </Resource>
     <Resource Include="Images\TrayIcons\Monitor.ico" />
     <Resource Include="Images\TrayIcons\red.png" />
+    <Resource Include="Images\TrayIcons\TM3001.ico" />
     <Content Include="Languages\en.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>

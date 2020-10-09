@@ -1118,12 +1118,33 @@ namespace LayUp.ViewModel
 
         private void ShowPrintSetup()
         {
-            pageSetupDialog1.ShowDialog();
+            try
+            {
+                pageSetupDialog1.ShowDialog();
+
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                System.Windows.MessageBox.Show(e.Message, "Error");
+                //throw;
+            }
         }
         //显示打印预览窗口
         private void ShowPrintPreview()
         {
-            printPreviewDialog1.ShowDialog();
+            try
+            {
+                printPreviewDialog1.ShowDialog();
+
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                System.Windows.MessageBox.Show(e.Message, "Error");
+
+                //throw;
+            }
         }
 
         //打印
