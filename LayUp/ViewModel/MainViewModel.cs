@@ -332,6 +332,7 @@ namespace LayUp.ViewModel
         private void ClearReceviedData()
         {
             Results.Clear();
+            QuantityOfDone = 0;
         }
 
         private void ChangeSerialPort(string obj)
