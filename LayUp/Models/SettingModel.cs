@@ -7,8 +7,17 @@ using System.Threading.Tasks;
 
 namespace LayUp.Models
 {
-    class SettingModel:ObservableObject
+   public class SettingModel:ObservableObject
 
     {
+        public SettingModel()
+        {
+
+        }
+        //细分
+        public int Subdivision { get; set; }
+        //导程
+        public int Pitch { get; set; }
+
     }
 }

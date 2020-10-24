@@ -44,7 +44,7 @@ namespace LayUp.ViewModel
             ////}
 
             SimpleIoc.Default.Register<MainViewModel>();
-            SimpleIoc.Default.Register<SettingViewModel>();
+           // SimpleIoc.Default.Register<SettingViewModel>();
             SimpleIoc.Default.Register<IOTableViewModel>();
         }
 
@@ -55,13 +55,13 @@ namespace LayUp.ViewModel
                 return ServiceLocator.Current.GetInstance<MainViewModel>();
             }
         }
-        public SettingViewModel SettingViewModel
-        {
-            get
-            {
-                return ServiceLocator.Current.GetInstance<SettingViewModel>();
-            }
-        }
+        //public SettingViewModel SettingViewModel
+        //{
+        //    get
+        //    {
+        //        return ServiceLocator.Current.GetInstance<SettingViewModel>();
+        //    }
+        //}
         public IOTableViewModel IOTableViewModel
         {
             get

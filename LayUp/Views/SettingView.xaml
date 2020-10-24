@@ -4,10 +4,43 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:LayUp.Views"
+        Icon="/Images/TrayIcons/TM3001.ico"
         mc:Ignorable="d"
-        Title="SettingView" Height="450" Width="800"
+        Title="参数设置" Height="280" Width="480" 
+      
         >
     <Grid>
-        
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="55*"/>
+            <ColumnDefinition Width="24*"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition/>
+            <RowDefinition/>
+        </Grid.RowDefinitions>
+        <StackPanel Grid.Row="0" Margin="20" Grid.ColumnSpan="2">
+            <GroupBox Header="机械参数" Width="200" HorizontalAlignment="Left">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="26*"/>
+                        <ColumnDefinition Width="21*"/>
+                        <ColumnDefinition Width="47*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition/>
+                        <RowDefinition/>
+                    </Grid.RowDefinitions>
+                    <TextBlock Text="细分:" Height="20" Grid.Row="0" Grid.Column="0" Margin="2" Grid.ColumnSpan="2"/>
+                    <TextBox Height="20" Text="{Binding Subdivision}" BorderBrush="Black" Grid.Column="2" Grid.Row="0" Margin="0,2"/>
+                    <TextBlock Text="导程:" Height="20" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"/>
+                    <TextBox Height="20"  Text="{Binding Pitch}" BorderBrush="Black" Grid.Column="2" Grid.Row="1"/>
+                </Grid>
+
+            </GroupBox>
+
+        </StackPanel>
+        <Grid Grid.Row="1" Grid.ColumnSpan="2">
+            <Button Content="确认" Width="108" Height="35" Command="{Binding SetParameterCommand}" ></Button>
+        </Grid>
     </Grid>
 </Window>

@@ -42,7 +42,8 @@ namespace LayUp.Views
         public MainWindow()
         {
             InitializeComponent();
-           
+            this.Unloaded += (sender, e) => Messenger.Default.Unregister(this);
+
             Messenger.Default.Register<NotificationMessage>(this, NotificationMessageReceived);
             //初始化定时器，显示当前时间
             DispatcherTimer2 = new DispatcherTimer();
@@ -64,6 +65,8 @@ namespace LayUp.Views
             if (msg.Notification == "View2")
             {
                 var view2 = new Views.SettingView();
+                view2.Owner = this;
+                view2.WindowStartupLocation = WindowStartupLocation.CenterOwner;
                 view2.ShowDialog();
             }
             if (msg.Notification == "IOTable")

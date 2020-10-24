@@ -1,5 +1,5 @@
 using GalaSoft.MvvmLight;
-//using GalaSoft.MvvmLight.CommandWpf;
+
 using GalaSoft.MvvmLight.Messaging;
 using LayUp.Models;
 using System;
@@ -26,6 +26,7 @@ using System.Threading;
 using System.IO;
 using System.Management;
 using SystemFonts = System.Drawing.SystemFonts;
+using LayUp.Views;
 
 namespace LayUp.ViewModel
 {
@@ -154,7 +155,7 @@ namespace LayUp.ViewModel
         private System.Windows.Forms.PageSetupDialog pageSetupDialog1=new PageSetupDialog();
         private System.Windows.Forms.PrintPreviewDialog printPreviewDialog1=new PrintPreviewDialog();
         private int linesPrinted;
-        private string[] lines=new string[12] ;
+        private string[] lines ;
 
         //是否自动打印
         private bool _isAutoPrint;
@@ -163,10 +164,10 @@ namespace LayUp.ViewModel
             get { return _isAutoPrint; }
             set { Set(ref _isAutoPrint, value); }
         }
-       
-        private Fx3GA _layupPLC = new Fx3GA();
         string[] baudRate = { "9600", "19200", "38400", "57600", "115200" };
         string[] dataBit = { "5", "6", "7", "8" };
+        private Fx3GA _layupPLC = new Fx3GA();
+        
         public Fx3GA LayupPLC
         {
             get { return _layupPLC; }
@@ -214,8 +215,75 @@ namespace LayUp.ViewModel
             get { return _errorCode; }
             set { Set(ref _errorCode, value); }
         }
-
-
+        private SettingModel _settingModel;
+        public SettingModel SettingModel
+        {
+            get { return _settingModel; }
+            set { Set(ref _settingModel, value); }
+        }
+        //原点到拍照点距离
+        private float _photoDistance ;
+        public float PhotoDistance
+        {
+            get { return _photoDistance; }
+            set { Set(ref _photoDistance, value); }
+        }
+        //工件间隔
+        private float _workpieceInterval;
+        public float WorkpieceInterval
+        {
+            get { return _workpieceInterval; }
+            set { Set(ref _workpieceInterval, value); }
+        }
+        //前进速度
+        private float _forwardVelocity;
+        public float ForwardVelocity
+        {
+            get { return _forwardVelocity; }
+            set { Set(ref _forwardVelocity, value); }
+        }
+        //复位速度
+        private float _returnVelocity;
+        public float ReturnVelocity
+        {
+            get { return _returnVelocity; }
+            set { Set(ref _returnVelocity, value); }
+        }
+        //爬行速度
+        private float _jogVelocity;
+        public float JogVelocity
+        {
+            get { return _jogVelocity; }
+            set { Set(ref _jogVelocity, value); }
+        }
+        //原点回归开始速度
+        private float _startVelocity;
+        public float StartVelocity
+        {
+            get { return _startVelocity; }
+            set { Set(ref _startVelocity, value); }
+        }
+        //工件数量
+        private int _workpieceQuantity=12;
+        public int WorkpieceQuantity
+        {
+            get { return _workpieceQuantity; }
+            set { Set(ref _workpieceQuantity, value); }
+        }
+        //公差上限
+        private double _tolUpperLimit=0;
+        public double TolUpperLimit
+        {
+            get { return _tolUpperLimit; }
+            set { Set(ref _tolUpperLimit, value); }
+        }
+        //公差下限
+        private double _tolLowerLimit=0;
+        public double TolLowerLimit
+        {
+            get { return _tolLowerLimit; }
+            set { Set(ref _tolLowerLimit, value); }
+        }
         //定时器
         private readonly DispatcherTimer DispatcherTimer1;
 
@@ -240,6 +308,9 @@ namespace LayUp.ViewModel
         public ICommand OpenPrintPreviewCommand { get; set; }
         public  ICommand PrintCommand { get; set; }
 
+        public ICommand ShowSettingWindowCommand { get; set; }
+        public ICommand ShowIOWindowCommand { get; set; }
+
 
         public MainViewModel()
         {
@@ -248,7 +319,7 @@ namespace LayUp.ViewModel
             ConnectCommand = new RelayCommand<bool>(Connect, CanConnectExcute);
             SwitchOutputCommand = new RelayCommand<string>(SwitchOutput);
             StopMonitorCommand = new RelayCommand<bool>(StopMonitor, CanStopMonitorExcute);
-            ShowViewCommand = new RelayCommand<string>(ShowViewCommandExecute);
+            ShowViewCommand = new RelayCommand<string>(ShowSettingWindowCommandExecute);
             SwitchLangugeCommand = new RelayCommand<string>(SwitchLanguage);
             WriteDataCommand = new RelayCommand<object>(WriteData);
             ChangeConnectionTypeCommand = new RelayCommand<string>(ChangeConnectionType);
@@ -262,6 +333,10 @@ namespace LayUp.ViewModel
             OpenPrintSetupCommand=new RelayCommand(ShowPrintSetup);
             OpenPrintPreviewCommand=new RelayCommand(ShowPrintPreview);
             PrintCommand=new RelayCommand(Print);
+
+            ShowSettingWindowCommand = new RelayCommand<string>(ShowSettingWindowCommandExecute);
+            ShowIOWindowCommand = new RelayCommand(ShowIOWindowCommandExecute);
+
             _frmPLC = new FrmPLC();
             _layupPLC = new Fx3GA();
             _serialPorts = SerialPort.GetPortNames();
@@ -272,7 +347,9 @@ namespace LayUp.ViewModel
             DispatcherTimer1.Interval = new System.TimeSpan(500);
            // DispatcherTimer1.Tick += GetOutputStatus;
            // DispatcherTimer1.Tick += GetInputStatus;
-            DispatcherTimer1.Tick += GetDataStatus;
+            //DispatcherTimer1.Tick += GetDataStatus;
+            
+          //  DispatcherTimer1.Tick +={ () => { _serialPorts = SerialPort.GetPortNames(); } };
             // DispatcherTimer1.Tick += GetMStatus;
 
             //初始化打印
@@ -282,7 +359,7 @@ namespace LayUp.ViewModel
             printDocument1.PrinterSettings.PrinterName =SelectedPrinterName;
             //设置页边距
             printDocument1.PrinterSettings.DefaultPageSettings.Margins.Left = 0;
-            printDocument1.PrinterSettings.DefaultPageSettings.Margins.Top = 100;
+            printDocument1.PrinterSettings.DefaultPageSettings.Margins.Top = 0;
             printDocument1.PrinterSettings.DefaultPageSettings.Margins.Right = 0;
             printDocument1.PrinterSettings.DefaultPageSettings.Margins.Bottom = 0;
             //设置尺寸大小，如不设置默认是A4纸
@@ -290,7 +367,9 @@ namespace LayUp.ViewModel
             //当你设定的分辨率是72像素/英寸时，A4纸的尺寸的图像的像素是595×842
             //当你设定的分辨率是150像素/英寸时，A4纸的尺寸的图像的像素是1240×1754
             //当你设定的分辨率是300像素/英寸时，A4纸的尺寸的图像的像素是2479×3508，
-            printDocument1.DefaultPageSettings.PaperSize = new PaperSize("A4", 2479, 3508);
+           // printDocument1.DefaultPageSettings.PaperSize = new PaperSize("A4", 2479, 3508);
+            printDialog1.AllowSelection = true;
+            printDocument1.DefaultPageSettings.PaperSize = printDialog1.PrinterSettings.DefaultPageSettings.PaperSize;
             //printDocument1.BeginPrint += new System.Drawing.Printing.PrintEventHandler(this.OnBeginPrint);
             printDocument1.BeginPrint += OnBeginPrint;
             printDocument1.EndPrint += PrintDocument1_EndPrint;
@@ -308,13 +387,37 @@ namespace LayUp.ViewModel
             this.printPreviewDialog1.Visible = false;
 
 
+            //将配置文件反序列化为对象，如果反序列化失败就使用默认值初始化SettingModel
+            try
+            {
+                SettingModel = JsonConvert.DeserializeObject<SettingModel>(File.ReadAllText(Environment.CurrentDirectory + "\\config" + ".json"));
+
+            }
+            catch (Exception e)
+            {
+
+                //System.Windows.MessageBox.Show(e.Message);
+                SettingModel = new SettingModel { Subdivision = 1600, Pitch = 5 };
+
+            }
+
             //初始化串口设置
 
-            serialPort.DataReceived += dataReceived;
 
             //初始化序列化
             JsonSerializer serializer=new JsonSerializer();
-           // serializer.Serialize();
+           
+            //注册消息接收设置窗口传来的对象，接收到后进行序列化操作保存成配置文件
+            Messenger.Default.Register<SettingModel>(this, msg =>
+            {
+                SettingModel.Pitch = msg.Pitch;
+                SettingModel.Subdivision = msg.Subdivision;
+                //Debug.Print(SettingModel.Pitch.ToString());
+                Debug.Print(SettingModel.Subdivision.ToString());
+                string Json = JsonConvert.SerializeObject(SettingModel, Formatting.Indented);
+                File.WriteAllText(Environment.CurrentDirectory +  "\\config" + ".json", Json);
+                
+            });
 
         }
 
@@ -359,7 +462,10 @@ namespace LayUp.ViewModel
         {
             if (IsSerialPortConnected==true)
             {
+                serialPort.DataReceived-= dataReceived;
+               // serialPort.DataReceived = null;
                 serialPort.Close();
+
                 IsSerialPortConnected = false;
             }
            
@@ -444,7 +550,6 @@ namespace LayUp.ViewModel
                         {
                             ModbusClient1.Connect();
                             LayupPLC.IsConnected = true;
-
                             DispatcherTimer1.Start();
 
                         }
@@ -484,6 +589,11 @@ namespace LayUp.ViewModel
                         {
                             GetPLCInfo();
                             DispatcherTimer1.Start();
+                            EventArgs e=null;
+                            object o=null;
+                            GetDataStatus( o, e);
+                            lines = new string[WorkpieceQuantity];
+
                             LayupPLC.IsConnected = true;
                         }
                         else
@@ -781,12 +891,25 @@ namespace LayUp.ViewModel
                 _layupPLC.Data222 = a[2];
 
                 _layupPLC.Data224 = a[4];
+                PhotoDistance = ((float)_layupPLC.Data224) / SettingModel.Subdivision * SettingModel.Pitch;
                 _layupPLC.Data226 = a[6];
+                JogVelocity = ((float)_layupPLC.Data226) / SettingModel.Subdivision * SettingModel.Pitch;
+
                 _layupPLC.Data228 = a[8];
+                ReturnVelocity= ((float)_layupPLC.Data228) / SettingModel.Subdivision * SettingModel.Pitch;
+
                 _layupPLC.Data230 = a[10];
+                StartVelocity = ((float)_layupPLC.Data230) / SettingModel.Subdivision * SettingModel.Pitch;
+
                 _layupPLC.Data232 = a[12];
+                WorkpieceInterval = ((float)_layupPLC.Data232) / SettingModel.Subdivision * SettingModel.Pitch;
+
                 _layupPLC.Data234 = a[14];
+                ForwardVelocity = ((float)_layupPLC.Data234) / SettingModel.Subdivision * SettingModel.Pitch;
+
                 _layupPLC.Data236 = a[16];
+                WorkpieceQuantity =(int)_layupPLC.Data236;
+
 
             }
 
@@ -934,17 +1057,19 @@ namespace LayUp.ViewModel
             }
             else
             {
-                int b = _frmPLC.axActUtlType1.SetDevice("D224", Convert.ToInt32(values[0]));
-                b = _frmPLC.axActUtlType1.SetDevice("D226", Convert.ToInt32(values[1]));
-                b = _frmPLC.axActUtlType1.SetDevice("D228", Convert.ToInt32(values[2]));
-                b = _frmPLC.axActUtlType1.SetDevice("D230", Convert.ToInt32(values[3]));
-                b = _frmPLC.axActUtlType1.SetDevice("D232", Convert.ToInt32(values[4]));
-                b = _frmPLC.axActUtlType1.SetDevice("D234", Convert.ToInt32(values[5]));
-                b = _frmPLC.axActUtlType1.SetDevice("D236", Convert.ToInt32(values[6]));
+                int b = _frmPLC.axActUtlType1.SetDevice("D224",Convert.ToInt32( PhotoDistance * SettingModel.Subdivision / SettingModel.Pitch));
+                b = _frmPLC.axActUtlType1.SetDevice("D226", Convert.ToInt32(JogVelocity* SettingModel.Subdivision / SettingModel.Pitch));
+                b = _frmPLC.axActUtlType1.SetDevice("D228", Convert.ToInt32(ReturnVelocity * SettingModel.Subdivision / SettingModel.Pitch));
+                b = _frmPLC.axActUtlType1.SetDevice("D230", Convert.ToInt32(StartVelocity * SettingModel.Subdivision / SettingModel.Pitch));
+                b = _frmPLC.axActUtlType1.SetDevice("D232", Convert.ToInt32(WorkpieceInterval * SettingModel.Subdivision / SettingModel.Pitch));
+                b = _frmPLC.axActUtlType1.SetDevice("D234", Convert.ToInt32(ForwardVelocity * SettingModel.Subdivision / SettingModel.Pitch));
+                b = _frmPLC.axActUtlType1.SetDevice("D236", Convert.ToInt32(WorkpieceQuantity));
+                Results.Clear();
+
             }
-              
-            
-           // int b = _frmPLC.axActUtlType1.WriteDeviceBlock("D200", 3, ref a[0]);
+
+
+            // int b = _frmPLC.axActUtlType1.WriteDeviceBlock("D200", 3, ref a[0]);
         }
         //切换手动自动
         private void Switch()
@@ -952,9 +1077,23 @@ namespace LayUp.ViewModel
             int tempReturnCode =_frmPLC.axActUtlType1.SetDevice("m0081", 0);
 
         }
-        public void ShowViewCommandExecute(string viewName)
+        public void ShowSettingWindowCommandExecute(string viewName)
         {
-            Messenger.Default.Send(new NotificationMessage(viewName));
+            SettingView settingView = new SettingView();
+            
+            Messenger.Default.Send<SettingModel>(SettingModel,"ms");
+            settingView.ShowDialog();
+
+            
+        }
+        public void ShowIOWindowCommandExecute()
+        {
+            WindowIOTable windowIOTable = new WindowIOTable();
+
+          //  Messenger.Default.Send<SettingModel>(SettingModel, "ms");
+            windowIOTable.ShowDialog();
+
+
         }
         //切换界面语言
         public void SwitchLanguage(string str)
@@ -1029,7 +1168,49 @@ namespace LayUp.ViewModel
 
                     //打开串口
                     serialPort.Open();
-                    IsSerialPortConnected = true;
+                    try
+                    {
+                        // serialPort.Write("R0\r");
+                       // serialPort.DiscardInBuffer();
+                       //设置TM3000为RS232通讯模式
+                        serialPort.Write("Q0\r");
+                        SerialReceviedValue = serialPort.ReadTo("\r");
+                        serialPort.DiscardInBuffer();
+                        //读取TM3000的out1的公差设置
+                        serialPort.Write("SR,LM,01\r");
+                        SerialReceviedValue = serialPort.ReadTo("\r");
+                        string[] ReceviedValue = SerialReceviedValue.Split(',');
+                        if (ReceviedValue[0] == "SR")
+                            {
+                                string temp1 = ReceviedValue[3].Substring(1);
+                                TolUpperLimit= Convert.ToDouble(temp1);
+                                string temp2 = ReceviedValue[4].Substring(1);
+                                TolLowerLimit = Convert.ToDouble(temp2);
+                            //设置TM3000为正常拍照模式
+                            serialPort.Write("R0\r");
+                            SerialReceviedValue = serialPort.ReadTo("\r");
+                            serialPort.DataReceived += dataReceived;
+                            serialPort.DiscardInBuffer();
+                            IsSerialPortConnected = true;
+
+                            // Debug.Print(Convert.ToDouble("000.512").ToString());
+                            // 510 > Convert.ToInt32(temp2[1]) && Convert.ToInt32(temp2[1]) > 490;
+                        }
+                        else
+                            {
+
+
+                            }
+                            
+
+                        
+
+                        }
+                    catch (Exception e)
+                    {
+
+                        System.Windows.MessageBox.Show(e.Message);
+                    }
 
                 }
                 catch (System.Exception ex)
@@ -1049,15 +1230,16 @@ namespace LayUp.ViewModel
                {
                 Debug.Print("接收到串口数据");
                 string input=serialPort.ReadTo("\r");
+                serialPort.DiscardInBuffer();
                 //数据格式:TG,01,+000.485
-                
+               
                 App.Current.Dispatcher.Invoke((Action)delegate // <--- HERE
                 {
-                    if (Results.Count==12)
+                    if (Results.Count==WorkpieceQuantity)
                     {
                         Results.Clear();
                     }
-                   // Debug.Print(input);
+                   
                     SerialReceviedValue = input;
                     QuantityOfDone++;
                    string[] ReceviedValue= SerialReceviedValue.Split(',');
@@ -1069,9 +1251,9 @@ namespace LayUp.ViewModel
                     else
                     {
                         string temp = ReceviedValue[2].Substring(1);
-                      string[] temp2=  temp.Split('.');
+                      //string[] temp2=  temp.Split('.');
 
-                        if (510 > Convert.ToInt32(temp2[1])&& Convert.ToInt32(temp2[1])>490)
+                        if (TolUpperLimit> Convert.ToDouble(temp)&& Convert.ToDouble(temp)>TolLowerLimit)
                         {
                             ResultValue = "OK";
                         }
@@ -1086,10 +1268,11 @@ namespace LayUp.ViewModel
                     //把获取的结果保存到Results中
                     Results.Add(new Result() { Index =QuantityOfDone.ToString(), IsOk =ResultValue, dateTime = TempTime, ResultValue = ReceviedValue[2] });
                     //把获取的数据添加到Line中等待打印
-                    lines[QuantityOfDone-1] = QuantityOfDone.ToString() + "," + TempTime.ToString() + "," + ReceviedValue[2] + ","+ ResultValue;
-                    
-                    
-                    if (QuantityOfDone==12)
+                    //lines[QuantityOfDone-1] = QuantityOfDone.ToString() + "," + TempTime.ToString() + "," + ReceviedValue[2] + ","+ ResultValue;
+                    lines[QuantityOfDone-1] = QuantityOfDone.ToString() + ", "  + ReceviedValue[2] + ", "+ ResultValue;
+
+
+                    if (QuantityOfDone==WorkpieceQuantity)
                     {
                         string Json = JsonConvert.SerializeObject(Results, Formatting.Indented);
                         FileName = System.DateTime.Now.ToString("yyyyMMddHHmmssfff");
@@ -1121,6 +1304,7 @@ namespace LayUp.ViewModel
         {
             try
             {
+                pageSetupDialog1.PageSettings.Margins = new Margins(0, 0, 0, 0);
                 pageSetupDialog1.ShowDialog();
 
             }
@@ -1153,7 +1337,9 @@ namespace LayUp.ViewModel
         {
             try
             {
+                
                 printDocument1.Print();
+               
             }
             catch (Exception ex)
             {
@@ -1176,19 +1362,20 @@ namespace LayUp.ViewModel
         // OnPrintPage
         private void OnPrintPage(object sender, System.Drawing.Printing.PrintPageEventArgs e)
         {
-            int x = e.MarginBounds.Width/2;
-            int y = e.MarginBounds.Top+200;
-            int lineHight = 100;
+            //int x = e.MarginBounds.Width / 2;
+            int x = e.PageBounds.Width / 2;
+            int y = e.PageBounds.Top + 40;
+            int lineHight = 25;
             Brush textBrush = new SolidBrush(Color.Black);
-            Font textFont= new Font("Arial Narrow", 50F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            PointF titlePointF=new PointF(e.MarginBounds.Width/2,e.MarginBounds.Top+50);
+            Font textFont= new Font("Arial Narrow", 16F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            PointF titlePointF=new PointF(e.PageBounds.Width/2,e.PageBounds.Top+10);
             StringFormat textFormat = new StringFormat() { LineAlignment = StringAlignment.Center ,Alignment = StringAlignment.Center};
 
             Brush titleBrush = new SolidBrush(Color.Black);
-            Font titleFont=new Font("Arial Narrow",80F);
+            Font titleFont=new Font("Arial Narrow",12F);
             StringFormat titleFormat = new StringFormat() {LineAlignment = StringAlignment.Center, Alignment = StringAlignment.Center };
             e.Graphics.DrawString(FileName,titleFont,titleBrush,titlePointF,titleFormat);
-
+   
             while (linesPrinted < lines.Length)
             {
                 e.Graphics.DrawString(lines[linesPrinted++], textFont, textBrush, x, y,textFormat);
