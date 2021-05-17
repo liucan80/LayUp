@@ -5,6 +5,7 @@ using LayUp.Models;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Timers;
 using System.Windows;
 using System.Windows.Input;
@@ -12,7 +13,7 @@ using System.Windows.Threading;
 using EasyModbus;
 using System.Windows.Controls;
 using LayUp.API;
-using GalaSoft.MvvmLight.Command;
+using GalaSoft.MvvmLight.CommandWpf;
 
 namespace LayUp.ViewModel
 {
@@ -28,43 +29,45 @@ namespace LayUp.ViewModel
     /// See http://www.galasoft.ch/mvvm
     /// </para>
     /// </summary>
-    public class MainViewModel: ViewModelBase
+    public class MainViewModel : ViewModelBase
     {
         /// <summary>
         /// Initializes a new instance of the MainViewModel class.
         /// </summary>
         /// 
-        ModbusClient ModbusClient1 ;
+        ModbusClient ModbusClient1;
 
         private FrmPLC _frmPLC;
-       public FrmPLC FrmPLC { 
-            get 
-            { return _frmPLC; } 
-            set
-            { Set(ref _frmPLC, value); }
+
+        public FrmPLC FrmPLC
+        {
+            get { return _frmPLC; }
+            set { Set(ref _frmPLC, value); }
         }
 
-        private Fx3GA _layupPLC=new Fx3GA();
+        private Fx3GA _layupPLC = new Fx3GA();
 
         public Fx3GA LayupPLC
         {
             get { return _layupPLC; }
-            set { Set(ref _layupPLC,value); }
+            set { Set(ref _layupPLC, value); }
         }
 
         private Page _connectionType;
+
         public Page ConnectionType
         {
             get { return _connectionType; }
             set { Set(ref _connectionType, value); }
         }
 
-        private ObservableCollection<string> _returnCode ;
+        private ObservableCollection<string> _returnCode;
+
         public ObservableCollection<string> ReturnCode
         {
-            get { return _returnCode;}
-            set{Set(ref _returnCode,value);
-            } }
+            get { return _returnCode; }
+            set { Set(ref _returnCode, value); }
+        }
 
         private string _currentTime;
 
@@ -73,22 +76,33 @@ namespace LayUp.ViewModel
             get { return _currentTime; }
             set { Set(ref _currentTime, value); }
         }
+
         //输出的状态
         private string _output;
+
         public string Output
         {
             get { return _output; }
             set { Set(ref _output, value); }
         }
-        
+
+        //错误状态
+        private string _errorCode;
+
+        public string ErrorCode
+        {
+            get { return _errorCode; }
+            set { Set(ref _errorCode, value); }
+        }
+
 
         //定时器
         private readonly DispatcherTimer DispatcherTimer1;
 
         public ICommand ConnectCommand { get; set; }
-        public ICommand SwitchOutputCommand{ get; set; }
+        public ICommand SwitchOutputCommand { get; set; }
         public ICommand StopMonitorCommand { get; set; }
-       
+
 
         public ICommand ShowViewCommand { private set; get; }
         public ICommand SwitchLangugeCommand { get; set; }
@@ -97,9 +111,9 @@ namespace LayUp.ViewModel
 
         public MainViewModel()
         {
-            
-         
-            ConnectCommand = new RelayCommand<bool>(Connect,CanConnectExcute);
+
+
+            ConnectCommand = new RelayCommand<bool>(Connect, CanConnectExcute);
             SwitchOutputCommand = new RelayCommand<string>(SwitchOutput);
             StopMonitorCommand = new RelayCommand<bool>(StopMonitor, CanStopMonitorExcute);
             ShowViewCommand = new RelayCommand<string>(ShowViewCommandExecute);
@@ -110,7 +124,7 @@ namespace LayUp.ViewModel
             _frmPLC = new FrmPLC();
             _layupPLC = new Fx3GA();
 
-            ReturnCode=new ObservableCollection<string>();
+            ReturnCode = new ObservableCollection<string>();
             //初始化定时器，定时读取PLC状态
             DispatcherTimer1 = new DispatcherTimer();
             DispatcherTimer1.Interval = new System.TimeSpan(500);
@@ -123,6 +137,7 @@ namespace LayUp.ViewModel
 
 
         }
+
         /// <summary>
         /// 如果是自动运行状态则禁用Command
         /// </summary>
@@ -147,21 +162,21 @@ namespace LayUp.ViewModel
         /// <returns></returns>
         private bool CanConnectExcute(bool arg)
         {
-            if (_layupPLC.IsDisConnected ==true)
-            {
-                return true;
-            }
-            else
+            if (LayupPLC.IsConnected == true)
             {
                 return false;
             }
-           
+            else
+            {
+                return true;
+            }
+
         }
 
         private void GetCurrentTime(object sender, EventArgs e)
         {
             //
-          _currentTime=  System.DateTime.Now.ToString();
+            _currentTime = System.DateTime.Now.ToString();
         }
 
 
@@ -172,23 +187,24 @@ namespace LayUp.ViewModel
             switch (LayupPLC.ConnectionMethod)
             {
                 case "ModbusTCP":
+
                     #region 使用ModbusTcp连接
-                   
+
                     if (_layupPLC.IsConnected == true)
                     {
                         DispatcherTimer1.Stop();
-                       
+
 
                         LayupPLC.IsConnected = false;
                     }
                     else
                     {
-                        ModbusClient1 = new ModbusClient(LayupPLC.IpAddress, (int)LayupPLC.Port);
+                        ModbusClient1 = new ModbusClient(LayupPLC.IpAddress, (int) LayupPLC.Port);
                         try
                         {
                             ModbusClient1.Connect();
                             LayupPLC.IsConnected = true;
-                          
+
                             DispatcherTimer1.Start();
 
                         }
@@ -197,18 +213,22 @@ namespace LayUp.ViewModel
 
                             System.Windows.Forms.MessageBox.Show(e.Message);
                         }
-                       
+
                     }
+
                     break;
+
                 #endregion
 
                 case "MXComponent":
+
                     #region 使用MX component连接
-                    _frmPLC.axActUtlType1.ActLogicalStationNumber = (int)LayupPLC.StationNumber;
+
+                    _frmPLC.axActUtlType1.ActLogicalStationNumber = (int) LayupPLC.StationNumber;
 
                     if (_layupPLC.IsConnected == true)
                     {
-                        
+
                         DispatcherTimer1.Stop();
                         _frmPLC.axActUtlType1.Close();
 
@@ -233,19 +253,23 @@ namespace LayUp.ViewModel
 
                         }
                     }
+
                     break;
+
                 #endregion
+
                 default:
                     break;
             }
-           
-            
-            
-           
+
+
+
+
         }
+
         private bool CanStopMonitorExcute(bool arg)
         {
-            if (_layupPLC.IsConnected == true)
+            if (LayupPLC.IsConnected == true)
             {
                 return true;
             }
@@ -255,6 +279,7 @@ namespace LayUp.ViewModel
             }
 
         }
+
         //停止监控
         private void StopMonitor(bool isConnected)
         {
@@ -263,25 +288,29 @@ namespace LayUp.ViewModel
             {
                 case "ModbusTCP":
                     ModbusClient1.Disconnect();
+                    LayupPLC.ErrorCode = "";
                     break;
                 case "MXComponent":
                     _frmPLC.axActUtlType1.Close();
+                    LayupPLC.ErrorCode = "";
+
                     break;
                 default:
                     break;
             }
-           
-           
-           
+
+
+
             _layupPLC.IsConnected = false;
         }
+
         //打开/关闭输出
         private void SwitchOutput(string str)
         {
             int a;
-            
+
             int b = _frmPLC.axActUtlType1.GetDevice(str, out a);
-            if (a==0)
+            if (a == 0)
             {
                 _frmPLC.axActUtlType1.SetDevice(str, 1);
             }
@@ -290,14 +319,14 @@ namespace LayUp.ViewModel
                 _frmPLC.axActUtlType1.SetDevice(str, 0);
 
             }
-          
+
             //_frmPLC.axActUtlType1.GetDevice(str, out a);
             //_layupPLC.StationNumber = b;
             //_layupPLC.Output000 = a;
 
         }
-        private delegate int? MyDel(bool parameter);
-        MyDel del = (parameter) =>
+
+        Func<bool,int> BoolToIntFunc=new Func<bool,int>(((parameter) =>
         {
             if (parameter != true)
             {
@@ -307,7 +336,9 @@ namespace LayUp.ViewModel
             {
                 return 1;
             }
-        };
+        }));
+        
+        
         //获取输出状态
         private void GetOutputStatus(object sender, System.EventArgs e)
         {
@@ -318,23 +349,24 @@ namespace LayUp.ViewModel
                     {
 
                         bool[] Result;
+                       
                         Result = ModbusClient1.ReadCoils(0000, 16);
-                        _layupPLC.Output000 = del(Result[0]);
-                        _layupPLC.Output001 = del(Result[1]);
-                        _layupPLC.Output002 = del(Result[2]);
-                        _layupPLC.Output003 = del(Result[3]);
-                        _layupPLC.Output004 = del(Result[4]);
-                        _layupPLC.Output005 = del(Result[5]);
-                        _layupPLC.Output006 = del(Result[6]);
-                        _layupPLC.Output007 = del(Result[7]);
-                        _layupPLC.Output010 = del(Result[8]);
-                        _layupPLC.Output011 = del(Result[9]);
-                        _layupPLC.Output012 = del(Result[10]);
-                        _layupPLC.Output013 = del(Result[11]);
-                        _layupPLC.Output014 = del(Result[12]);
-                        _layupPLC.Output015 = del(Result[13]);
-                        _layupPLC.Output016 = del(Result[14]);
-                        _layupPLC.Output017 = del(Result[15]);
+                        _layupPLC.Output000 = BoolToIntFunc(Result[0]);
+                        _layupPLC.Output001 = BoolToIntFunc(Result[1]);
+                        _layupPLC.Output002 = BoolToIntFunc(Result[2]);
+                        _layupPLC.Output003 = BoolToIntFunc(Result[3]);
+                        _layupPLC.Output004 = BoolToIntFunc(Result[4]);
+                        _layupPLC.Output005 = BoolToIntFunc(Result[5]);
+                        _layupPLC.Output006 = BoolToIntFunc(Result[6]);
+                        _layupPLC.Output007 = BoolToIntFunc(Result[7]);
+                        _layupPLC.Output010 = BoolToIntFunc(Result[8]);
+                        _layupPLC.Output011 = BoolToIntFunc(Result[9]);
+                        _layupPLC.Output012 = BoolToIntFunc(Result[10]);
+                        _layupPLC.Output013 = BoolToIntFunc(Result[11]);
+                        _layupPLC.Output014 = BoolToIntFunc(Result[12]);
+                        _layupPLC.Output015 = BoolToIntFunc(Result[13]);
+                        _layupPLC.Output016 = BoolToIntFunc(Result[14]);
+                        _layupPLC.Output017 = BoolToIntFunc(Result[15]);
                        
                     }
                     break;
@@ -389,30 +421,30 @@ namespace LayUp.ViewModel
                 Result = ModbusClient1.ReadDiscreteInputs(0000, 24);
 
                
-                _layupPLC.Input000 = del(Result[0]);
-                _layupPLC.Input001 = del(Result[1]);
-                _layupPLC.Input002 = del(Result[2]);
-                _layupPLC.Input003 = del(Result[3]);
-                _layupPLC.Input004 = del(Result[4]);
-                _layupPLC.Input005 = del(Result[5]);
-                _layupPLC.Input006 = del(Result[6]);
-                _layupPLC.Input007 = del(Result[7]);
-                _layupPLC.Input010 = del(Result[8]);
-                _layupPLC.Input011 = del(Result[9]);
-                _layupPLC.Input012 = del(Result[10]);
-                _layupPLC.Input013 = del(Result[11]);
-                _layupPLC.Input014 = del(Result[12]);
-                _layupPLC.Input015 = del(Result[13]);
-                _layupPLC.Input016 = del(Result[14]);
-                _layupPLC.Input017 = del(Result[15]);
-                _layupPLC.Input020 = del(Result[16]);
-                _layupPLC.Input021 = del(Result[17]);
-                _layupPLC.Input022 = del(Result[18]);
-                _layupPLC.Input023 = del(Result[19]);
-                _layupPLC.Input024 = del(Result[20]);
-                _layupPLC.Input025 = del(Result[21]);
-                _layupPLC.Input026 = del(Result[22]);
-                _layupPLC.Input027 = del(Result[23]);
+                _layupPLC.Input000 = BoolToIntFunc(Result[0]);
+                _layupPLC.Input001 = BoolToIntFunc(Result[1]);
+                _layupPLC.Input002 = BoolToIntFunc(Result[2]);
+                _layupPLC.Input003 = BoolToIntFunc(Result[3]);
+                _layupPLC.Input004 = BoolToIntFunc(Result[4]);
+                _layupPLC.Input005 = BoolToIntFunc(Result[5]);
+                _layupPLC.Input006 = BoolToIntFunc(Result[6]);
+                _layupPLC.Input007 = BoolToIntFunc(Result[7]);
+                _layupPLC.Input010 = BoolToIntFunc(Result[8]);
+                _layupPLC.Input011 = BoolToIntFunc(Result[9]);
+                _layupPLC.Input012 = BoolToIntFunc(Result[10]);
+                _layupPLC.Input013 = BoolToIntFunc(Result[11]);
+                _layupPLC.Input014 = BoolToIntFunc(Result[12]);
+                _layupPLC.Input015 = BoolToIntFunc(Result[13]);
+                _layupPLC.Input016 = BoolToIntFunc(Result[14]);
+                _layupPLC.Input017 = BoolToIntFunc(Result[15]);
+                _layupPLC.Input020 = BoolToIntFunc(Result[16]);
+                _layupPLC.Input021 = BoolToIntFunc(Result[17]);
+                _layupPLC.Input022 = BoolToIntFunc(Result[18]);
+                _layupPLC.Input023 = BoolToIntFunc(Result[19]);
+                _layupPLC.Input024 = BoolToIntFunc(Result[20]);
+                _layupPLC.Input025 = BoolToIntFunc(Result[21]);
+                _layupPLC.Input026 = BoolToIntFunc(Result[22]);
+                _layupPLC.Input027 = BoolToIntFunc(Result[23]);
             }
             else
             {
@@ -506,14 +538,49 @@ namespace LayUp.ViewModel
 
                 Result = ModbusClient1.ReadCoils(8416, 16);
 
-                _layupPLC.M231 = del(Result[7]);
-                _layupPLC.M232 = del(Result[8]);
-                _layupPLC.M233 = del(Result[9]);
-                _layupPLC.M234 = del(Result[10]);
-                _layupPLC.M235 = del(Result[11]);
+                _layupPLC.M231 = BoolToIntFunc(Result[7]);
+                _layupPLC.M232 = BoolToIntFunc(Result[8]);
+                _layupPLC.M233 = BoolToIntFunc(Result[9]);
+                _layupPLC.M234 = BoolToIntFunc(Result[10]);
+                _layupPLC.M235 = BoolToIntFunc(Result[11]);
+                //获取M128-M143的值 
 
-                Result = ModbusClient1.ReadCoils(8416, 16);
+                Result = ModbusClient1.ReadCoils(8320, 16);
 
+                ErrorCode = "";
+                
+                foreach (var item in Result)
+                {
+                    if (item==true)
+                    {
+                        ErrorCode += "1";
+
+                        
+                    }
+                    else
+                    {
+                        ErrorCode += "0";
+                    }
+                }
+              
+                
+                _layupPLC.M128 =BoolToIntFunc(Result[0]);
+                _layupPLC.M129 =BoolToIntFunc(Result[1]);
+                _layupPLC.M130 =BoolToIntFunc(Result[2]);
+                _layupPLC.M131 =BoolToIntFunc(Result[3]);
+                _layupPLC.M132 =BoolToIntFunc(Result[4]);
+                _layupPLC.M133 =BoolToIntFunc(Result[5]);
+                _layupPLC.M134 =BoolToIntFunc(Result[6]);
+                _layupPLC.M135 =BoolToIntFunc(Result[7]);
+                _layupPLC.M136 =BoolToIntFunc(Result[8]);
+                _layupPLC.M137 =BoolToIntFunc(Result[9]);
+                _layupPLC.M138 =BoolToIntFunc(Result[10]);
+                _layupPLC.M139 =BoolToIntFunc(Result[11]);
+                _layupPLC.M140 =BoolToIntFunc(Result[12]);
+                _layupPLC.M141 =BoolToIntFunc(Result[13]);
+                _layupPLC.M142 =BoolToIntFunc(Result[14]);
+                _layupPLC.M143 =BoolToIntFunc(Result[15]);
+             //  Debug.Print(_layupPLC.M128.ToString());
                 return;
             }
             else
@@ -522,7 +589,7 @@ namespace LayUp.ViewModel
                 int[] b = new int[2];
                 //获取M224-M239的值
                 int c = _frmPLC.axActUtlType1.ReadDeviceBlock("M224", 1, out a[0]);
-                //获取M128-M143的值
+                //获取M128-M143的值 
                 c = _frmPLC.axActUtlType1.ReadDeviceBlock("M128", 1, out b[0]);
 
                 int[] array1 = Convert1(a[0]);
@@ -552,6 +619,12 @@ namespace LayUp.ViewModel
                 _layupPLC.M142 = array2[1];
                 _layupPLC.M143 = array2[0];
 
+                ErrorCode = "";
+
+                foreach (var item in array2)
+                {
+                    ErrorCode += item.ToString();
+                }
 
 
             }

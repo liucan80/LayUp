@@ -6,6 +6,7 @@
         xmlns:local="clr-namespace:LayUp.Views"
         mc:Ignorable="d"
         Title="{DynamicResource MainWindowTitle}" Height="768" Width="1024" WindowStyle="SingleBorderWindow"
+        MinWidth="1024"
         xmlns:Common="clr-namespace:LayUp.Common"
         DataContext="{Binding Path=Main, Source={StaticResource Locator}}"
         Icon="/Images/TrayIcons/Monitor.ico"
@@ -21,6 +22,7 @@
         <Common:IntToStringConverter x:Key="IntToStringConverter1"/>
         <Common:MutilValueConverter x:Key="MutilValueConverter1"/>
         <Common:StringToPageConverter x:Key="StringToPageConverter1"/>
+        <Common:ReverseBoolConverter x:Key="ReverseBoolConverter"></Common:ReverseBoolConverter>
 
 
 
@@ -169,7 +171,7 @@
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="150" />
+                            <ColumnDefinition Width="250" />
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="150" />
                             <ColumnDefinition Width="Auto" />
@@ -191,12 +193,12 @@
             <StatusBarItem Grid.Column="2" >
 
                 <!--通过使用Buttong的控件模板，使StatusBarItem可以单击-->
-                <Button Click="Button_Click"  >
+                <Button  >
                     <Button.Template>
                         <ControlTemplate TargetType="{x:Type Button}">
                             <StackPanel Orientation="Horizontal" MinHeight="30" MinWidth="120" VerticalAlignment="Center">
                                 <TextBlock Text="{DynamicResource CurrentError}" VerticalAlignment="Center"></TextBlock>
-                                <TextBlock Foreground="Red" VerticalAlignment="Center" Name="lblCursorPosition" Text="{Binding  LayupPLC.ErrorCode}" />
+                                <TextBlock Foreground="Red" VerticalAlignment="Center" Name="lblCursorPosition" Text="{Binding ErrorCode}" />
                             </StackPanel>
                         </ControlTemplate>
                     </Button.Template>
@@ -608,7 +610,7 @@
                         </Grid.ColumnDefinitions>
 
                         <TextBlock FontSize="13" VerticalAlignment="Bottom" TextAlignment="Center" Grid.Column="0" Grid.Row="0" Text="{DynamicResource ConnectionType}" Grid.ColumnSpan="2" Margin="0,0,112.6,2.4"  ></TextBlock>
-                        <ComboBox    HorizontalAlignment="Center"  MinWidth="100"  Grid.Column="1" Grid.Row="0"  FontSize="12"  SelectedIndex="0"  Height="22" VerticalAlignment="Bottom"  >
+                        <ComboBox   IsEnabled="{Binding LayupPLC.IsConnected ,Converter={StaticResource ReverseBoolConverter}}" HorizontalAlignment="Center"  MinWidth="100"  Grid.Column="1" Grid.Row="0"  FontSize="12"  SelectedIndex="0"  Height="22" VerticalAlignment="Bottom"  >
                             <ComboBoxItem Content="ModbusTCP" IsSelected="True" >
                                 <i:Interaction.Triggers>
                                     <i:EventTrigger EventName="Selected">
@@ -638,11 +640,12 @@
                     </GroupBox>
                     <Grid Margin="0,10,0,10">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition/>
-                            <ColumnDefinition/>
+                            <ColumnDefinition Width="53*"/>
+                            <ColumnDefinition Width="32*"/>
+                            <ColumnDefinition Width="85*"/>
                         </Grid.ColumnDefinitions>
-                        <Button  Content="{DynamicResource Connect}" Command="{Binding ConnectCommand}" IsEnabled="{Binding LayupPLC.IsDisConnected, Mode=OneWay}"  Width="80" Height="29" />
-                        <Button Grid.Column="1" Content="{DynamicResource Disconnect}" Command="{Binding StopMonitorCommand}"  IsEnabled="{Binding LayupPLC.IsConnected}"  Width="80" />
+                        <Button  Content="{DynamicResource Connect}" Command="{Binding ConnectCommand}"   Width="80" Height="29" Margin="2,0,2.8,-0.2" VerticalAlignment="Bottom" Grid.ColumnSpan="2"  />
+                        <Button x:Name="Button1" Grid.Column="2" Content="{DynamicResource Disconnect}"  Command="{Binding StopMonitorCommand}"  Width="80" Margin="2.2,0,2.6,-0.2" />
 
 
                     </Grid>
@@ -661,7 +664,7 @@
                    
                     PopupActivation="DoubleClick">
                 <tb:TaskbarIcon.ContextMenu >
-                    <ContextMenu Background="LightCoral" MenuItem.Click="ContextMenu_Click" >
+                    <ContextMenu Background="White" MenuItem.Click="ContextMenu_Click" >
                         <MenuItem Tag="MenuNormal"  Header="{DynamicResource iconTrayOpen}"/>
                         <MenuItem Tag="MenuMin" Header="最小化"/>
                         <MenuItem Tag="MenuClose" Header="{DynamicResource iconTrayExit}"/>

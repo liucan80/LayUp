@@ -57,6 +57,7 @@ namespace LayUp.Views
         {
             _currentTime = System.DateTime.Now.ToString();
             TxtCurrentTime .Text= _currentTime;
+            
         }
         private void NotificationMessageReceived(NotificationMessage msg)
         {
@@ -72,35 +73,6 @@ namespace LayUp.Views
                 IOTable.ShowDialog();
             }
 
-        }
-
-        private void Button_Click(object sender, RoutedEventArgs e)
-        {
-            System.Windows.Forms.MessageBox.Show("Test");
-
-        }
-
-        private void ComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            
-            //  var container=ViewModel.ViewModelLocator.
-            
-        }
-
-        private void Button_Click_1(object sender, RoutedEventArgs e)
-        {
-            Debug.Print(DataContext.ToString());
-
-        }
-
-        private void MenuItem_Click(object sender, RoutedEventArgs e)
-        {
-            this.Close();
-        }
-
-        private void MenuItem_Click_1(object sender, RoutedEventArgs e)
-        {
-            this.WindowState = WindowState.Minimized;
         }
 
         private void ContextMenu_Click(object sender, RoutedEventArgs e)

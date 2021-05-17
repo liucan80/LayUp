@@ -30,6 +30,8 @@
     <system:String x:Key="Disconnect">Disconnect</system:String>
     <system:String x:Key="Conform">Conform</system:String>
     <system:String x:Key="LineDirectionSetting">DirectionSetting</system:String>
+    <system:String x:Key="InitErrorCode">None</system:String>
+
 
     <!--Setting General-->
     <system:String x:Key="wox_settings">Wox Settings</system:String>

@@ -58,18 +58,18 @@ namespace LayUp.Models
             {
                // _isConnected = value;
                 Set(ref _isConnected, value);
-                _isDisConnected = !value;
+              //  _isDisConnected = !value;
                // Set(ref _isDisConnected, !value);
 
 
             }
         }
-        //PLC的连接状态  断开时为真
-        private bool? _isDisConnected = true;
+       // PLC的连接状态 断开时为真
+        private bool? _isDisConnected;
 
         public bool? IsDisConnected
         {
-            get { return !_isConnected; }
+            get { return !IsConnected; }
             set
             {
                 // _isConnected = value;
@@ -111,7 +111,7 @@ namespace LayUp.Models
         }
 
         //ErrorCode
-        private string _errorCode="无";
+        private string _errorCode;
         public string ErrorCode
         {
             get { return _errorCode; }
