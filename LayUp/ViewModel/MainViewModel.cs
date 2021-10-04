@@ -3,17 +3,25 @@ using GalaSoft.MvvmLight;
 using GalaSoft.MvvmLight.Messaging;
 using LayUp.Models;
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
-using System.Timers;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Threading;
-using EasyModbus;
 using System.Windows.Controls;
-using LayUp.API;
 using GalaSoft.MvvmLight.CommandWpf;
+using System.ComponentModel;
+using LayUp.Handler;
+using Dapper;
+using System.Collections.Generic;
+using EasyModbus;
+using System.IO;
+using System.Linq;
+using System.Data;
+using System.Data.SQLite;
+using System.Threading.Tasks;
+using System.Timers;
+using System.Threading;
 
 namespace LayUp.ViewModel
 {
@@ -35,178 +43,340 @@ namespace LayUp.ViewModel
         /// Initializes a new instance of the MainViewModel class.
         /// </summary>
         /// 
-        ModbusClient ModbusClient1;
-
-        private FrmPLC _frmPLC;
-
-        public FrmPLC FrmPLC
-        {
-            get { return _frmPLC; }
-            set { Set(ref _frmPLC, value); }
-        }
-
+        
+        EasyModbus.ModbusClient ModbusClient1;
+        protected static Config config;
         private Fx3GA _layupPLC = new Fx3GA();
-
         public Fx3GA LayupPLC
         {
             get { return _layupPLC; }
             set { Set(ref _layupPLC, value); }
         }
-
-        private Page _connectionType;
-
-        public Page ConnectionType
+        /// <summary>
+        /// 是否自动连接PLC
+        /// </summary>
+        private bool _autoConnect;
+        public bool AutoConnect
         {
-            get { return _connectionType; }
-            set { Set(ref _connectionType, value); }
+            get { return _autoConnect; }
+            set { Set(ref _autoConnect, value); }
+
         }
-
-        private ObservableCollection<string> _returnCode;
-
-        public ObservableCollection<string> ReturnCode
-        {
-            get { return _returnCode; }
-            set { Set(ref _returnCode, value); }
-        }
-
-        private string _currentTime;
-
-        public string CurrentTime
-        {
-            get { return _currentTime; }
-            set { Set(ref _currentTime, value); }
-        }
-
-        //输出的状态
-        private string _output;
-
-        public string Output
-        {
-            get { return _output; }
-            set { Set(ref _output, value); }
-        }
-
         //错误状态
         private string _errorCode;
+
+        private bool _errorHappened;
+        public bool ErrorHappened { get { return _errorHappened; }  set {
+                Set(ref _errorHappened, value);
+                 } }
 
         public string ErrorCode
         {
             get { return _errorCode; }
             set { Set(ref _errorCode, value); }
         }
+        
+        private ObservableCollection<ErrorRecord> _currentLog=new ObservableCollection<ErrorRecord> { 
 
+        };
+        public ObservableCollection<ErrorRecord> CurrentLog
+        {
+            get { return _currentLog; }
+            set
+            {
+                Set(ref _currentLog, value);
+            }
+        }
+        private bool[] previousRegister = new bool[100];
+        public ObservableCollection<Error> DefinedError = new ObservableCollection<Error>();
+        public ObservableCollection<string> ErrorRegisters = new ObservableCollection<string>();
 
+        /// <summary>
+        /// 是否开机启动
+        /// </summary>
+        private bool _isAutoRun;
+        public bool IsAutoRun
+        { get => Utils.IsAutoRun();
+            set { Set(ref _isAutoRun, value); }
+        }
+
+        /// <summary>
+        /// 查询的起始时间
+        /// </summary>
+        private DateTime _startDateTime=DateTime.Now;
+        public DateTime StartDateTime
+        { get { return _startDateTime; }
+            set { Set(ref _startDateTime,value); }
+        }
+        /// <summary>
+        /// 查询的截至时间
+        /// </summary>
+        private DateTime _endDateTime=DateTime.Now;
+        public DateTime EndDateTime
+        {
+            get { return _endDateTime; }
+            set { Set(ref _endDateTime, value); }
+        }
+        /// <summary>
+        /// 要查询的记录等级
+        /// </summary>
+        private string _level;
+        public string Level
+        {
+            get { return _level; }
+            set { Set(ref _level,value); }
+        }
+        /// <summary>
+        /// 要查询的记录ID
+        /// </summary>
+        private string _ID;
+        public string ID
+        {
+            get { return _ID; }
+            set { Set(ref _ID, value); }
+        }
+
+        /// <summary>
+        /// 是否允许查询
+        /// </summary>
+        private bool _isAllowQuery;
+        public bool IsAllowQuery
+        {
+            get { return _isAllowQuery; }
+            set { Set(ref _isAllowQuery, value); }
+        }
         //定时器
         private readonly DispatcherTimer DispatcherTimer1;
-
+        private readonly DispatcherTimer DispatcherTimer2;
         public ICommand ConnectCommand { get; set; }
         public ICommand SwitchOutputCommand { get; set; }
         public ICommand StopMonitorCommand { get; set; }
-
-
         public ICommand ShowViewCommand { private set; get; }
         public ICommand SwitchLangugeCommand { get; set; }
         public ICommand WriteDataCommand { get; set; }
+        public ICommand WriteRadomDataCommand { get; set; }
+        public ICommand ReadRadomDataCommand { get; set; }
         public ICommand ChangeConnectionTypeCommand { get; set; }
-
+        public ICommand ButtonDownCommand { get; set; }
+        public ICommand ButtonUpCommand { get; set; }
+        public ICommand SetAutoRunCommand { get; set; }
+        public ICommand SetAutoConnectCommand { get; set; }
+        public ICommand ResetErrorCommand { get; set; }
+        public ICommand ResetPLCCommand { get; set; }
+        public ICommand ClearErrorLogCommand { get; set; }
+        public ICommand QueryCommand { get; set; }
+        public ICommand AllowQueryCommand { get; set; }
+        public ICommand ClearDateLogCommand { get; set; }
+        DataAccess dataAccess = new DataAccess();
         public MainViewModel()
         {
 
-
-            ConnectCommand = new RelayCommand<bool>(Connect, CanConnectExcute);
-            SwitchOutputCommand = new RelayCommand<string>(SwitchOutput);
-            StopMonitorCommand = new RelayCommand<bool>(StopMonitor, CanStopMonitorExcute);
+            CurrentLog = dataAccess.GetAllRecords();
+            ConnectCommand = new RelayCommand<bool>(Connect, (bool CanExcute)=> { return !_layupPLC.IsConnected; });
+            SwitchOutputCommand = new RelayCommand<string>(SwitchDelay);
+         //   StopMonitorCommand = new RelayCommand<bool>(CloseConnection, CanStopMonitorExcute);
+            StopMonitorCommand = new RelayCommand<bool>(CloseConnection, (bool CanExcute) =>{ return _layupPLC.IsConnected; });
             ShowViewCommand = new RelayCommand<string>(ShowViewCommandExecute);
             SwitchLangugeCommand = new RelayCommand<string>(SwitchLanguage);
             WriteDataCommand = new RelayCommand<object>(WriteData);
+            WriteRadomDataCommand = new RelayCommand<List<string>>(WriteRadomData);
+            ReadRadomDataCommand = new RelayCommand(ReadRadomData);
             ChangeConnectionTypeCommand = new RelayCommand<string>(ChangeConnectionType);
+            ButtonDownCommand = new RelayCommand<string>(OnButtonDown);
+            ButtonUpCommand = new RelayCommand<string>(OnButtonUp);
+            SetAutoRunCommand = new RelayCommand<bool>(setAutoRun);
+            SetAutoConnectCommand = new RelayCommand<bool>(setAutoConnect);
+            ResetErrorCommand = new RelayCommand<bool>(ResetError, (bool CanExcute)=> { return ErrorHappened; });
+            ResetPLCCommand = new RelayCommand<bool>(ResetPLC, (bool CanExcute) => { return _layupPLC.SM[0]; });
+            //Func<bool> p = (bool CanExcute) => { return CurrentLog.Count == 0; };
+            ClearErrorLogCommand = new RelayCommand<bool>(ClearErrorLog, (bool CanExcute) => {return CurrentLog.Count == 0 ? false : true; });
+            QueryCommand = new RelayCommand(QueryErrorLog);
+            AllowQueryCommand = new RelayCommand(AllowQuery);
+            ClearDateLogCommand = new RelayCommand(dataAccess.ClearRecords);
 
-            _frmPLC = new FrmPLC();
-            _layupPLC = new Fx3GA();
 
-            ReturnCode = new ObservableCollection<string>();
+            _layupPLC = new Fx3GA(){ ConnectionMethod="ModbusTCP" };
+            ConfigHandler.LoadConfig(ref config);
+            _layupPLC.IpAddress = config.Address;
+            _layupPLC.Port = config.Port;
+            AutoConnect = config.AutoConnect;        
+            using (StreamReader sr = new StreamReader("CustomError.txt"))
+            {
+                string line;
+                while ((line = sr.ReadLine()) != null)
+                {
+                    string[] elements = line.Split(',');
+                    DefinedError.Add(new Error { ID = Convert.ToInt32(elements[0]), ErrorRegister = elements[1], ErrorDescription = elements[2], Level = elements[3] });
+                    //dataGridView1.Rows.Add(elements);
+                }
+
+                foreach (var item in DefinedError)
+                {
+                    ErrorRegisters.Add(item.ErrorRegister);
+                }
+            } 
+           
             //初始化定时器，定时读取PLC状态
             DispatcherTimer1 = new DispatcherTimer();
-            DispatcherTimer1.Interval = new System.TimeSpan(500);
+            DispatcherTimer2 = new DispatcherTimer { Interval = new System.TimeSpan(0, 0, 1) };
+            DispatcherTimer2.Tick += DispatcherTimer2_Tick;
+            DispatcherTimer2.Start();
+            DispatcherTimer1.Interval = new System.TimeSpan(0,0,1);
+            //DispatcherTimer1.Interval = 1000;
             DispatcherTimer1.Tick += GetOutputStatus;
             DispatcherTimer1.Tick += GetInputStatus;
             DispatcherTimer1.Tick += GetDataStatus;
             DispatcherTimer1.Tick += GetMStatus;
+            DispatcherTimer1.Tick += GetSpecialDataStatus;
+            DispatcherTimer1.Tick += GetSpecialMStatus;
+            
+            if (Utils.PingHost(_layupPLC.IpAddress))
+            {
+                if (AutoConnect)
+                {
+                    Connect(_layupPLC.IsConnected);
+                }
 
-
-
+            }
+            EasyModbus.StoreLogData.Instance.Store("Open HMI", DateTime.Now);
 
         }
 
-        /// <summary>
-        /// 如果是自动运行状态则禁用Command
-        /// </summary>
-        /// <param name="arg"></param>
-        /// <returns></returns>
-        private bool CanSwitchOutput(string arg)
+        private void DispatcherTimer2_Tick(object sender, EventArgs e)
         {
-            if (_layupPLC.IsInManualMode == false)
+            Debug.Print(Thread.CurrentThread.Name);
+            Task.Run(() => { CurrentLog = dataAccess.GetAllRecords(); });
+            Debug.Print(Thread.CurrentThread.Name);
+
+        }
+
+        private void AllowQuery()
+        {
+            if (IsAllowQuery)
             {
-                return true;
+                DispatcherTimer2.Stop();
             }
             else
             {
-                return false;
+                DispatcherTimer2.Start();
+                
             }
         }
 
-        /// <summary>
-        /// 如果已经连接到PLC则禁用Command
-        /// </summary>
-        /// <param name="arg"></param>
-        /// <returns></returns>
-        private bool CanConnectExcute(bool arg)
+        private void QueryErrorLog()
         {
-            if (LayupPLC.IsConnected == true)
+            var sql = "SELECT * FROM ErrorRecord Where" ;
+            var param = new
             {
-                return false;
-            }
-            else
+                StartTime = StartDateTime,
+                EndTime = EndDateTime,
+                ErrorLevel = Level,
+                ErrorID = ID
+            };
+            if (StartDateTime!=null)
             {
-                return true;
+                sql = sql + " ErrorTime>=@StartTime";
             }
-
+            if (EndDateTime != null)
+            {
+                sql = sql + " and ErrorTime<=@EndTime";
+            }
+            if (Level != null && Level!="")
+            {
+                sql = sql + " and Level==@ErrorLevel";
+            }
+            if (ID != null && ID!="")
+            {
+                sql = sql + " and ID==@ErrorID";
+            }
+            // var sql = "SELECT * FROM ErrorRecord Where ErrorTime >= @ErrorTime and ErrorTime >= @ErrorTime ";
+            CurrentLog = dataAccess.GetRecords(sql, param);
         }
 
-        private void GetCurrentTime(object sender, EventArgs e)
+        private void ClearErrorLog(bool obj)
         {
-            //
-            _currentTime = System.DateTime.Now.ToString();
+            CurrentLog.Clear();
         }
 
+        private void ResetPLC(bool obj)
+        {
+            //将SM50置位，
+            ModbusClient1.WriteSingleCoil(20480, true);//UNDONE(需要测试是否可以清除错误)
+        }
 
-        //连接PLC
+      
+
+        private void ReadRadomData()
+        {
+            var result = ModbusClient1.ReadHoldingRegisters(150, 100);
+            for (int i = 0; i < 100; i++)
+            {
+                _layupPLC.Data[i+150] = result[i];
+            }
+        }
+
+        private void setAutoConnect(bool obj)
+        {
+            config.AutoConnect = _autoConnect;
+            ConfigHandler.SaveConfig(ref config);
+        }
+
+        private void OnButtonUp(string str)
+        {
+            int MRelayAddress = Convert.ToInt32(str.Substring(1)) + 8192;
+            try
+            {
+                ModbusClient1.WriteSingleCoil(MRelayAddress, false);
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+    
+        }
+
+        private void OnButtonDown(string str)
+        {
+            int MRelayAddress = Convert.ToInt32(str.Substring(1)) + 8192;
+            try
+            {
+                    ModbusClient1.WriteSingleCoil(MRelayAddress, true);
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+          
+        }
+
+        //打开连接
         private void Connect(bool isConnected)
         {
             //设置站号
-            switch (LayupPLC.ConnectionMethod)
+
+            switch (_layupPLC.ConnectionMethod)
             {
                 case "ModbusTCP":
-
+                    config.Address = _layupPLC.IpAddress;
+                    config.Port = _layupPLC.Port;
+                    ConfigHandler.SaveConfig(ref config);
                     #region 使用ModbusTcp连接
 
-                    if (_layupPLC.IsConnected == true)
+                    if (_layupPLC.IsConnected)
                     {
                         DispatcherTimer1.Stop();
-
-
-                        LayupPLC.IsConnected = false;
+                        _layupPLC.IsConnected = false;
                     }
                     else
                     {
-                        ModbusClient1 = new ModbusClient(LayupPLC.IpAddress, (int) LayupPLC.Port);
+                        ModbusClient1 = new ModbusClient(_layupPLC.IpAddress, (int) _layupPLC.Port);
                         try
                         {
                             ModbusClient1.Connect();
-                            LayupPLC.IsConnected = true;
-
                             DispatcherTimer1.Start();
-
+                            _layupPLC.IsConnected = true;
+                            ReadRadomData();
+                            EasyModbus.StoreLogData.Instance.Store("PLC Connected for Modbus-TCP,IPAddress: " + _layupPLC.IpAddress + ", Port: " + _layupPLC.Port, DateTime.Now);
                         }
                         catch (Exception e)
                         {
@@ -220,473 +390,222 @@ namespace LayUp.ViewModel
 
                 #endregion
 
-                case "MXComponent":
+                
 
-                    #region 使用MX component连接
-
-                    _frmPLC.axActUtlType1.ActLogicalStationNumber = (int) LayupPLC.StationNumber;
-
-                    if (_layupPLC.IsConnected == true)
-                    {
-
-                        DispatcherTimer1.Stop();
-                        _frmPLC.axActUtlType1.Close();
-
-                        LayupPLC.IsConnected = false;
-
-
-                    }
-                    else
-                    {
-                        int b = _frmPLC.axActUtlType1.Open();
-                        LayupPLC.RetrunCode = b.ToString();
-                        if (b == 0)
-                        {
-                            GetPLCInfo();
-                            DispatcherTimer1.Start();
-                            LayupPLC.IsConnected = true;
-                        }
-                        else
-                        {
-                            DispatcherTimer1.Stop();
-                            LayupPLC.IsConnected = false;
-
-                        }
-                    }
-
-                    break;
-
-                #endregion
-
+               
                 default:
+                    
                     break;
             }
-
+            
 
 
 
         }
 
-        private bool CanStopMonitorExcute(bool arg)
-        {
-            if (LayupPLC.IsConnected == true)
-            {
-                return true;
-            }
-            else
-            {
-                return false;
-            }
-
-        }
-
-        //停止监控
-        private void StopMonitor(bool isConnected)
+        //关闭连接
+        private void CloseConnection(bool isConnected)
         {
             DispatcherTimer1.Stop();
-            switch (LayupPLC.ConnectionMethod)
+            switch (_layupPLC.ConnectionMethod)
             {
                 case "ModbusTCP":
                     ModbusClient1.Disconnect();
-                    LayupPLC.ErrorCode = "";
-                    break;
-                case "MXComponent":
-                    _frmPLC.axActUtlType1.Close();
-                    LayupPLC.ErrorCode = "";
-
+                    EasyModbus.StoreLogData.Instance.Store("PLC DisConnected for Modbus-TCP,IPAddress: " + _layupPLC.IpAddress + ", Port: " + _layupPLC.Port, DateTime.Now);
                     break;
                 default:
                     break;
             }
-
-
-
             _layupPLC.IsConnected = false;
         }
-
-        //打开/关闭输出
-        private void SwitchOutput(string str)
+        //打开/关闭继电器
+        private void SwitchDelay(string str)
         {
-            int a;
-
-            int b = _frmPLC.axActUtlType1.GetDevice(str, out a);
-            if (a == 0)
+           
+            //用M继电器驱动输出继电器,fx5UPLC M0~7679的Modbus地址是2000H,所以先获取对应M继电器状态再翻转
+            int MRelayAddress = Convert.ToInt32(str.Substring(1))+8192; 
+            bool[] MState;
+            try
             {
-                _frmPLC.axActUtlType1.SetDevice(str, 1);
+               MState= ModbusClient1.ReadCoils(MRelayAddress, 1);
+                if (MState[0])
+                {
+                    ModbusClient1.WriteSingleCoil(MRelayAddress, false);
+                }
+                else
+                {
+                    ModbusClient1.WriteSingleCoil(MRelayAddress, true);
+                }
+                
             }
-            else
+            catch (Exception)
             {
-                _frmPLC.axActUtlType1.SetDevice(str, 0);
 
+                throw;
             }
-
-            //_frmPLC.axActUtlType1.GetDevice(str, out a);
-            //_layupPLC.StationNumber = b;
-            //_layupPLC.Output000 = a;
 
         }
-
-        Func<bool,int> BoolToIntFunc=new Func<bool,int>(((parameter) =>
-        {
-            if (parameter != true)
-            {
-                return 0;
-            }
-            else
-            {
-                return 1;
-            }
-        }));
-        
-        
-        //获取输出状态
+        //获取Y输出状态
         private void GetOutputStatus(object sender, System.EventArgs e)
         {
-            switch (LayupPLC.ConnectionMethod)
+            try
             {
-                case "ModbusTCP":
-                    if (true)
-                    {
+                switch (_layupPLC.ConnectionMethod)
+                {
+                    case "ModbusTCP":
+                        if (true)
+                        {
 
-                        bool[] Result;
-                       
-                        Result = ModbusClient1.ReadCoils(0000, 16);
-                        _layupPLC.Output000 = BoolToIntFunc(Result[0]);
-                        _layupPLC.Output001 = BoolToIntFunc(Result[1]);
-                        _layupPLC.Output002 = BoolToIntFunc(Result[2]);
-                        _layupPLC.Output003 = BoolToIntFunc(Result[3]);
-                        _layupPLC.Output004 = BoolToIntFunc(Result[4]);
-                        _layupPLC.Output005 = BoolToIntFunc(Result[5]);
-                        _layupPLC.Output006 = BoolToIntFunc(Result[6]);
-                        _layupPLC.Output007 = BoolToIntFunc(Result[7]);
-                        _layupPLC.Output010 = BoolToIntFunc(Result[8]);
-                        _layupPLC.Output011 = BoolToIntFunc(Result[9]);
-                        _layupPLC.Output012 = BoolToIntFunc(Result[10]);
-                        _layupPLC.Output013 = BoolToIntFunc(Result[11]);
-                        _layupPLC.Output014 = BoolToIntFunc(Result[12]);
-                        _layupPLC.Output015 = BoolToIntFunc(Result[13]);
-                        _layupPLC.Output016 = BoolToIntFunc(Result[14]);
-                        _layupPLC.Output017 = BoolToIntFunc(Result[15]);
-                       
-                    }
-                    break;
-                case "MXComponent":
+                            bool[] Result;
 
-                    int[] a = new int[2];
-                    int b = _frmPLC.axActUtlType1.ReadDeviceBlock("y000", 1, out a[0]);
-                    if (b != 0)
-                    {
-                        StopMonitor(true);
-                        return;
-                    }
-                    string str = Convert.ToString(a[0], 2).PadLeft(16, '0');
-                    int[] array1 = new int[16];
-                    for (int i = 0; i < 16; i++)
-                    {
-                        array1[i] = int.Parse(str.Substring(i, 1));
-                    }
+                            Result = ModbusClient1.ReadCoils(0000, 32);
 
-                    // _returnCode.Add(String.Format("0x{0:x8} [HEX]", b));
-                    _layupPLC.Output000 = array1[15];
-                    _layupPLC.Output001 = array1[14];
-                    _layupPLC.Output002 = array1[13];
-                    _layupPLC.Output003 = array1[12];
-                    _layupPLC.Output004 = array1[11];
-                    _layupPLC.Output005 = array1[10];
-                    _layupPLC.Output006 = array1[9];
-                    _layupPLC.Output007 = array1[8];
-                    _layupPLC.Output010 = array1[7];
-                    _layupPLC.Output011 = array1[6];
-                    _layupPLC.Output012 = array1[5];
-                    _layupPLC.Output013 = array1[4];
-                    _layupPLC.Output014 = array1[3];
-                    _layupPLC.Output015 = array1[2];
-                    _layupPLC.Output016 = array1[1];
-                    _layupPLC.Output017 = array1[0];
-                    break;
-                default:
-                    break;
+                            for (int i = 0; i < 32; i++)
+                            {
+                                _layupPLC.Output[i] = Result[i];
+                            }
+
+                          
+
+                        }
+                        break;
+                    
+                    default:
+                        break;
+                }
             }
+            catch (Exception)
+            {
+
+                throw;
+            }
+           
            
            
 
         }
-        //获取输入状态
-
+        //获取X输入状态
         private void GetInputStatus(object sender, System.EventArgs e)
         {
-            if (LayupPLC.ConnectionMethod == "ModbusTCP")
+            if (_layupPLC.ConnectionMethod == "ModbusTCP")
             {
                 bool[] Result;
-                Result = ModbusClient1.ReadDiscreteInputs(0000, 24);
-
-               
-                _layupPLC.Input000 = BoolToIntFunc(Result[0]);
-                _layupPLC.Input001 = BoolToIntFunc(Result[1]);
-                _layupPLC.Input002 = BoolToIntFunc(Result[2]);
-                _layupPLC.Input003 = BoolToIntFunc(Result[3]);
-                _layupPLC.Input004 = BoolToIntFunc(Result[4]);
-                _layupPLC.Input005 = BoolToIntFunc(Result[5]);
-                _layupPLC.Input006 = BoolToIntFunc(Result[6]);
-                _layupPLC.Input007 = BoolToIntFunc(Result[7]);
-                _layupPLC.Input010 = BoolToIntFunc(Result[8]);
-                _layupPLC.Input011 = BoolToIntFunc(Result[9]);
-                _layupPLC.Input012 = BoolToIntFunc(Result[10]);
-                _layupPLC.Input013 = BoolToIntFunc(Result[11]);
-                _layupPLC.Input014 = BoolToIntFunc(Result[12]);
-                _layupPLC.Input015 = BoolToIntFunc(Result[13]);
-                _layupPLC.Input016 = BoolToIntFunc(Result[14]);
-                _layupPLC.Input017 = BoolToIntFunc(Result[15]);
-                _layupPLC.Input020 = BoolToIntFunc(Result[16]);
-                _layupPLC.Input021 = BoolToIntFunc(Result[17]);
-                _layupPLC.Input022 = BoolToIntFunc(Result[18]);
-                _layupPLC.Input023 = BoolToIntFunc(Result[19]);
-                _layupPLC.Input024 = BoolToIntFunc(Result[20]);
-                _layupPLC.Input025 = BoolToIntFunc(Result[21]);
-                _layupPLC.Input026 = BoolToIntFunc(Result[22]);
-                _layupPLC.Input027 = BoolToIntFunc(Result[23]);
-            }
-            else
-            {
-                int[] a = new int[2];
-                int b = _frmPLC.axActUtlType1.ReadDeviceBlock("X000", 2, out a[0]);
-                string str = Convert.ToString(a[0], 2).PadLeft(16, '0');
-
-                int[] array1 = new int[16];
-                int[] array2 = new int[16];
-                for (int i = 0; i < 16; i++)
+                Result = ModbusClient1.ReadDiscreteInputs(0000, 32);
+                for (int i = 0; i < 32; i++)
                 {
-                    array1[i] = int.Parse(str.Substring(i, 1));
+                    _layupPLC.Input[i] = Result[i];
                 }
-                str = Convert.ToString(a[1], 2).PadLeft(16, '0');
-                for (int i = 0; i < 16; i++)
-                {
-                    array2[i] = int.Parse(str.Substring(i, 1));
-                }
-                _layupPLC.Input000 = array1[15];
-                _layupPLC.Input001 = array1[14];
-                _layupPLC.Input002 = array1[13];
-                _layupPLC.Input003 = array1[12];
-                _layupPLC.Input004 = array1[11];
-                _layupPLC.Input005 = array1[10];
-                _layupPLC.Input006 = array1[9];
-                _layupPLC.Input007 = array1[8];
-                _layupPLC.Input010 = array1[7];
-                _layupPLC.Input011 = array1[6];
-                _layupPLC.Input012 = array1[5];
-                _layupPLC.Input013 = array1[4];
-                _layupPLC.Input014 = array1[3];
-                _layupPLC.Input015 = array1[2];
-                _layupPLC.Input016 = array1[1];
-                _layupPLC.Input017 = array1[0];
-                _layupPLC.Input020 = array2[15];
-                _layupPLC.Input021 = array2[14];
-                _layupPLC.Input022 = array2[13];
-                _layupPLC.Input023 = array2[12];
-                _layupPLC.Input024 = array2[11];
-                _layupPLC.Input025 = array2[10];
-                _layupPLC.Input026 = array2[9];
-                _layupPLC.Input027 = array2[8];
-                // _layupPLC.Input004 = array1[0];
-                //Console.WriteLine(str);
-                //   BitConverter
 
             }
+            
 
 
         }
         //获取D寄存器状态
         private void GetDataStatus(object sender, System.EventArgs e)
         {
-            if (LayupPLC.ConnectionMethod == "ModbusTCP")
+            if (_layupPLC.ConnectionMethod == "ModbusTCP")
             {
                 int[] Result;
-                Result = ModbusClient1.ReadHoldingRegisters(192, 24);
-                _layupPLC.Data200 = Result[8];
-                _layupPLC.Data201 = Result[9];
-                _layupPLC.Data202 = Result[10];
-                _layupPLC.Data210 = Result[18];
-                _layupPLC.Data211 = Result[19];
-                _layupPLC.Data212 = Result[20];
-            }
-            else
-            {
+                Result = ModbusClient1.ReadHoldingRegisters(130, 100);
 
-                int[] a = new int[16];
-                int b = _frmPLC.axActUtlType1.ReadDeviceBlock("D200", 16, out a[0]);
-                foreach (var item in a)
-                {
-
-                    Console.WriteLine(item.ToString());
-                }
-                _layupPLC.Data200 = a[0];
-                _layupPLC.Data201 = a[1];
-                _layupPLC.Data202 = a[2];
-                _layupPLC.Data210 = a[10];
-                _layupPLC.Data211 = a[11];
-                _layupPLC.Data212 = a[12];
+                _layupPLC.Data[130] = Result[0];
+                _layupPLC.Data[132] = Result[2];
             }
+            
         }
         //获取M寄存器状态
-        private void GetMStatus(object sender, System.EventArgs e)
+        public async void  GetMStatus(object sender, System.EventArgs e)
         {
-            if (LayupPLC.ConnectionMethod == "ModbusTCP")
+            if (_layupPLC.ConnectionMethod == "ModbusTCP")
             {
-
                 bool[] Result;
-                //获取M224-M239的值 
-
-                Result = ModbusClient1.ReadCoils(8416, 16);
-
-                _layupPLC.M231 = BoolToIntFunc(Result[7]);
-                _layupPLC.M232 = BoolToIntFunc(Result[8]);
-                _layupPLC.M233 = BoolToIntFunc(Result[9]);
-                _layupPLC.M234 = BoolToIntFunc(Result[10]);
-                _layupPLC.M235 = BoolToIntFunc(Result[11]);
-                //获取M128-M143的值 
-
-                Result = ModbusClient1.ReadCoils(8320, 16);
-
-                ErrorCode = "";
-                
-                foreach (var item in Result)
+                //获取M0-M320的值 
+                Result = ModbusClient1.ReadCoils(8192,320);
+                for(int i=0;i<320;i++)
                 {
-                    if (item==true)
-                    {
-                        ErrorCode += "1";
+                    _layupPLC.M[i] = Result[i];
 
-                        
-                    }
-                    else
-                    {
-                        ErrorCode += "0";
-                    }
                 }
-              
-                
-                _layupPLC.M128 =BoolToIntFunc(Result[0]);
-                _layupPLC.M129 =BoolToIntFunc(Result[1]);
-                _layupPLC.M130 =BoolToIntFunc(Result[2]);
-                _layupPLC.M131 =BoolToIntFunc(Result[3]);
-                _layupPLC.M132 =BoolToIntFunc(Result[4]);
-                _layupPLC.M133 =BoolToIntFunc(Result[5]);
-                _layupPLC.M134 =BoolToIntFunc(Result[6]);
-                _layupPLC.M135 =BoolToIntFunc(Result[7]);
-                _layupPLC.M136 =BoolToIntFunc(Result[8]);
-                _layupPLC.M137 =BoolToIntFunc(Result[9]);
-                _layupPLC.M138 =BoolToIntFunc(Result[10]);
-                _layupPLC.M139 =BoolToIntFunc(Result[11]);
-                _layupPLC.M140 =BoolToIntFunc(Result[12]);
-                _layupPLC.M141 =BoolToIntFunc(Result[13]);
-                _layupPLC.M142 =BoolToIntFunc(Result[14]);
-                _layupPLC.M143 =BoolToIntFunc(Result[15]);
-             //  Debug.Print(_layupPLC.M128.ToString());
-                return;
-            }
-            else
-            {
-                int[] a = new int[2];
-                int[] b = new int[2];
-                //获取M224-M239的值
-                int c = _frmPLC.axActUtlType1.ReadDeviceBlock("M224", 1, out a[0]);
-                //获取M128-M143的值 
-                c = _frmPLC.axActUtlType1.ReadDeviceBlock("M128", 1, out b[0]);
-
-                int[] array1 = Convert1(a[0]);
-                int[] array2 = Convert1(b[0]);
-
-
-                _layupPLC.M231 = array1[8];
-                _layupPLC.M232 = array1[7];
-                _layupPLC.M233 = array1[6];
-                _layupPLC.M234 = array1[5];
-                _layupPLC.M235 = array1[4];
-
-                _layupPLC.M128 = array2[15];
-                _layupPLC.M129 = array2[14];
-                _layupPLC.M130 = array2[13];
-                _layupPLC.M131 = array2[12];
-                _layupPLC.M132 = array2[11];
-                _layupPLC.M133 = array2[10];
-                _layupPLC.M134 = array2[9];
-                _layupPLC.M135 = array2[8];
-                _layupPLC.M136 = array2[7];
-                _layupPLC.M137 = array2[6];
-                _layupPLC.M138 = array2[5];
-                _layupPLC.M139 = array2[4];
-                _layupPLC.M140 = array2[3];
-                _layupPLC.M141 = array2[2];
-                _layupPLC.M142 = array2[1];
-                _layupPLC.M143 = array2[0];
-
-                ErrorCode = "";
-
-                foreach (var item in array2)
+                //获取M1000-M1100的值
+                Result = ModbusClient1.ReadCoils(9192, 100);
+                for (int i = 0; i < 100; i++)
                 {
-                    ErrorCode += item.ToString();
+                    _layupPLC.M[i+1000] = Result[i];
+
+                }
+               await  Task.Run(new Action(()=> { ErrorHandler(Result); }));
+                
+                   
+            }
+           
+
+        }
+        //获取SD寄存器状态
+        private void GetSpecialDataStatus(object sender, System.EventArgs e)
+        {
+            if (_layupPLC.ConnectionMethod == "ModbusTCP")
+            {
+                int[] Result;
+                Result = ModbusClient1.ReadHoldingRegisters(20480, 80);
+                _layupPLC.SpecicalData[0] = Result[0];
+                Result = ModbusClient1.ReadHoldingRegisters(0x657C, 50);
+                for (int i = 0; i < 50; i++)
+                {
+                    _layupPLC.SpecicalData[i+5500] = Result[i];
+                }     
+            }
+           
+        }
+        //获取SM继电器状态
+        private void GetSpecialMStatus(object sender, System.EventArgs e)
+        {
+            if (_layupPLC.ConnectionMethod == "ModbusTCP")
+            {
+                bool[] Result;
+                Result = ModbusClient1.ReadCoils(20480, 100);
+
+                for (int i = 0; i < 100; i++)
+                {
+                    _layupPLC.SM[i] = Result[i];
                 }
 
-
             }
 
         }
-
-        private static int[] Convert1(int a)
-        {
-            string str = Convert.ToString(a, 2).PadLeft(16, '0');
-            int[] array1 = new int[16];
-            for (int i = 0; i < 16; i++)
-            {
-                array1[i] = int.Parse(str.Substring(i, 1));
-            }
-
-            return array1;
-        }
-
-        //获取PLC基本信息
-        private void GetPLCInfo()
-        {
-            int cpuType;
-            string cpuName;
-            int returnCode = _frmPLC.axActUtlType1.GetCpuType(out cpuName, out cpuType);
-            _layupPLC.CPUName = cpuName;
-        }
-
         //写入D寄存器
-
         private void WriteData(object parameter)
         {
 
             int[] a = new int[3];
             var values = (object[])parameter;
-            if (LayupPLC.ConnectionMethod=="ModbusTCP")
+            if (_layupPLC.ConnectionMethod == "ModbusTCP")
             {
-                ModbusClient1.WriteSingleRegister(10000,Convert.ToInt32(values[0]));
-                ModbusClient1.WriteSingleRegister(10001,Convert.ToInt32(values[1]));
-                ModbusClient1.WriteSingleRegister(10002,Convert.ToInt32(values[2]));
-                ModbusClient1.WriteSingleRegister(10010,Convert.ToInt32(values[3]));
-                ModbusClient1.WriteSingleRegister(10011,Convert.ToInt32(values[4]));
-                ModbusClient1.WriteSingleRegister(10012,Convert.ToInt32(values[5]));
+                ModbusClient1.WriteSingleRegister(10000, Convert.ToInt32(values[0]));
+                ModbusClient1.WriteSingleRegister(10001, Convert.ToInt32(values[1]));
+                ModbusClient1.WriteSingleRegister(10002, Convert.ToInt32(values[2]));
+                ModbusClient1.WriteSingleRegister(10010, Convert.ToInt32(values[3]));
+                ModbusClient1.WriteSingleRegister(10011, Convert.ToInt32(values[4]));
+                ModbusClient1.WriteSingleRegister(10012, Convert.ToInt32(values[5]));
             }
-            else
-            {
-                int b = _frmPLC.axActUtlType1.SetDevice("D200", Convert.ToInt32(values[0]));
-                b = _frmPLC.axActUtlType1.SetDevice("D201", Convert.ToInt32(values[1]));
-                b = _frmPLC.axActUtlType1.SetDevice("D202", Convert.ToInt32(values[2]));
-                b = _frmPLC.axActUtlType1.SetDevice("D210", Convert.ToInt32(values[3]));
-                b = _frmPLC.axActUtlType1.SetDevice("D211", Convert.ToInt32(values[4]));
-                b = _frmPLC.axActUtlType1.SetDevice("D212", Convert.ToInt32(values[5]));
-            }
-              
-            
-           // int b = _frmPLC.axActUtlType1.WriteDeviceBlock("D200", 3, ref a[0]);
         }
-        //切换手动自动
-        private void Switch()
+        //写入随机D寄存器
+        private void WriteRadomData(List<string> parameter)
         {
-            int tempReturnCode =_frmPLC.axActUtlType1.SetDevice("m0081", 0);
+            ModbusClient1.WriteSingleRegister(150, _layupPLC.Data[150]);
+            ModbusClient1.WriteSingleRegister(200, _layupPLC.Data[200]);
+            ModbusClient1.WriteSingleRegister(234, _layupPLC.Data[234]);
+            ModbusClient1.WriteSingleRegister(232, _layupPLC.Data[232]);
+            ModbusClient1.WriteSingleRegister(170, _layupPLC.Data[170]);
+            ModbusClient1.WriteSingleRegister(172, _layupPLC.Data[172]);
+            ModbusClient1.WriteSingleRegister(174, _layupPLC.Data[174]);
+            ModbusClient1.WriteSingleRegister(176, _layupPLC.Data[176]);
+            ModbusClient1.WriteSingleRegister(196, _layupPLC.Data[196]);
+            ModbusClient1.WriteSingleRegister(198, _layupPLC.Data[198]);
+
 
         }
+
         public void ShowViewCommandExecute(string viewName)
         {
             Messenger.Default.Send(new NotificationMessage(viewName));
@@ -694,7 +613,8 @@ namespace LayUp.ViewModel
         //切换界面语言
         public void SwitchLanguage(string str)
         {
-            // TODO: 切换系统资源文件
+          
+            //  切换系统资源文件
             ResourceDictionary dict = new ResourceDictionary();
             try
             {
@@ -718,15 +638,14 @@ namespace LayUp.ViewModel
 
             }
            
-
-            
-
         }
 
-
-        #region 页面切换
-        
-        #endregion
+        //设置自动启动
+        public void setAutoRun(bool isautorun)
+        {
+             Utils.SetAutoRun(!isautorun);
+        }
+ 
         //改变连接方式
         private void ChangeConnectionType(string connectionType)
         {
@@ -734,18 +653,207 @@ namespace LayUp.ViewModel
             switch (connectionType)
             {
                 case "MXComponent":
-                   // ConnectionType = PageManager.PageMXComponent;
-                    LayupPLC.ConnectionMethod = "MXComponent";
-                    // ConnectionMethod = "MXComponent";
+                    _layupPLC.ConnectionMethod = "MXComponent";
+       
                     break;
                 case "ModbusTCP":
-                   // ConnectionType = PageManager.PageMXComponent;
-                    LayupPLC.ConnectionMethod = "ModbusTCP";
-                    //ConnectionMethod = "ModbusTcp";
-
+                  
+                    _layupPLC.ConnectionMethod = "ModbusTCP";
                     break;
                 default:
                     break;
+            }
+        }
+
+        private void ErrorHandler(bool[] Register)
+        {
+            List<ErrorRecord> er = new List<ErrorRecord>();
+            if (Register.Contains(true))
+            {
+                _errorHappened = true;
+                
+                for (int i = 0; i < DefinedError.Count; i++)
+                {
+                    if (Register[i] != previousRegister[i])
+                    {
+                        if (Register[i])
+                        {
+
+                            Error e = DefinedError.Where(p => p.ID == i).First();
+                            ErrorRecord errorRecord = new ErrorRecord { ID = e.ID, ErrorDescription = e.ErrorDescription, ErrorRegister = e.ErrorRegister, Level = e.Level, ErrorTime = System.DateTime.Now };
+                            //Task.Run(new Action(() => { CurrentLog.Add(errorRecord); er.Add(errorRecord);
+                            //    dataAccess.InsertErrorRecord(errorRecord);
+                            //}));
+                            
+                           System.Windows.Application.Current.Dispatcher.Invoke(new Action(() => {
+                               //CurrentLog.Add(errorRecord); 
+                               er.Add(errorRecord);
+                               dataAccess.InsertErrorRecord(errorRecord);
+                           }));
+                            //Dispatcher.CurrentDispatcher.Invoke(new Action(() => {
+                            //    CurrentLog.Add(errorRecord); er.Add(errorRecord);
+                            //    dataAccess.InsertErrorRecord(errorRecord);
+                            //}));
+                            //CurrentLog.Add(errorRecord);
+                            // er.Add(errorRecord);
+                            // dataAccess.InsertErrorRecord(errorRecord);
+                        }
+
+                    }
+
+
+                    previousRegister[i] = Register[i];
+                }
+                if (er.Count>0)
+                {
+                    ErrorCode = er.Last().ErrorRegister + er.Last().ErrorDescription;
+
+                }
+
+            }
+            else
+            {
+                _errorHappened = false;
+                ErrorCode = "";
+            }
+            
+            
+
+        }
+
+        private void ResetError(bool errorHappened)
+        {
+            bool[] errorRegister = new bool[100];
+
+            ModbusClient1.WriteMultipleCoils(9192, errorRegister);
+        }
+
+        internal static void OnWindowsClosing(object sender, CancelEventArgs e)
+        {
+            EasyModbus.StoreLogData.Instance.Store("Close HMI", DateTime.Now);
+
+        }
+    }
+    public class DataAccess
+    {
+       public   DataAccess()
+        {
+            CreateDatabase();
+        }
+
+        public static SQLiteConnection SimpleDbConnection()
+        {
+            return new SQLiteConnection("Data Source=" + Global.DbFile);
+        }
+        /// <summary>
+        /// 创建数据库和数据表
+        /// </summary>
+        private static void CreateDatabase()
+        {
+            if (!System.IO.File.Exists(Global.DbFile))
+            {
+                SQLiteConnection.CreateFile(Global.DbFile);
+
+            }
+            using (var cnn =SimpleDbConnection())
+            {
+                
+                cnn.Execute(
+                    @"CREATE TABLE IF NOT EXISTS  ErrorRecord
+                      (
+                         ParentID                                   INTEGER  primary key AUTOINCREMENT,
+                         ID                                         INTEGER  not null,
+                         ErrorRegister                              char(100),
+                         ErrorDescription                           char(100),
+                         Level                                      char(100),
+                         ErrorTime                                  datetime 
+                      )");
+            }
+        }
+        /// <summary>
+        /// 新增单条记录
+        /// </summary>
+        /// <param name="errorRecord"></param>
+        public int InsertErrorRecord(ErrorRecord errorRecord)
+        {
+            using (IDbConnection connection = SimpleDbConnection())
+            {
+                const string sql =@"INSERT INTO ErrorRecord(ID,ErrorRegister ,ErrorDescription,Level, ErrorTime) VALUES (@ID, @ErrorRegister, @ErrorDescription, @Level,@ErrorTime)";
+             var dapperDemoID= connection.Execute(sql,errorRecord);
+                //var dapperDemoID = connection.Query<ErrorRecord>(sql, errorRecord).First();
+                return dapperDemoID;
+            }
+        }
+        /// <summary>
+        /// 获取所有记录
+        /// </summary>
+        /// <returns></returns>
+        public ObservableCollection<ErrorRecord> GetAllRecords()
+        {
+            // Create a connection to the SQL server
+            using (IDbConnection connection = SimpleDbConnection())
+            {
+                var sql = "SELECT * FROM ErrorRecord";
+                //return connection.Query<Movie>("SELECT * FROM Film").ToList(); // straight up SQL not good... use stored procedures.
+                return new ObservableCollection<ErrorRecord> (connection.Query<ErrorRecord>(sql));
+               
+            } // close the connection again, NOTE: Always remember to close connection to the DB when you are done. 
+        }
+        public ObservableCollection<ErrorRecord> GetRecords(string sql,object param)
+        {
+            // Create a connection to the SQL server
+            using (IDbConnection connection = SimpleDbConnection())
+            {
+               // var sql = "SELECT * FROM ErrorRecord";
+                //return connection.Query<Movie>("SELECT * FROM Film").ToList(); // straight up SQL not good... use stored procedures.
+                return new ObservableCollection<ErrorRecord>(connection.Query<ErrorRecord>(sql,param));
+
+            } // close the connection again, NOTE: Always remember to close connection to the DB when you are done. 
+        }
+
+        public static int Delete(ErrorRecord errorRecord)
+        {
+            using (IDbConnection connection = SimpleDbConnection())
+            {
+                return connection.Execute("delete from ErrorRecord where id=@ID", errorRecord);
+            }
+        }
+
+        public static int Delete(List<ErrorRecord> errorRecords)
+        {
+            using (IDbConnection connection = SimpleDbConnection())
+            {
+                return connection.Execute("delete from ErrorRecord where id=@ID", errorRecords);
+            }
+        }
+        /// <summary>
+        /// In操作
+        /// </summary>
+        public static List<ErrorRecord> QueryIn()
+        {
+            using (IDbConnection connection = SimpleDbConnection())
+            {
+                var sql = "select * from ErrorRecord where id in @ids";
+                //参数类型是Array的时候，dappper会自动将其转化
+                return connection.Query<ErrorRecord>(sql, new { ids = new int[2] { 1, 2 }, }).ToList();
+            }
+        }
+
+        public static List<ErrorRecord> QueryIn(int[] ids)
+        {
+            using (IDbConnection connection = SimpleDbConnection())
+            {
+                var sql = "select * from ErrorRecord where id in @ids";
+                //参数类型是Array的时候，dappper会自动将其转化
+                return connection.Query<ErrorRecord>(sql, new { ids }).ToList();
+            }
+        }
+
+        public  void ClearRecords()
+        {
+            using (IDbConnection connection = SimpleDbConnection())
+            {
+                 connection.Execute("delete  from ErrorRecord");
             }
         }
     }
