@@ -180,9 +180,13 @@
     <Compile Include="Models\IO.cs" />
     <Compile Include="Tool\Utils.cs" />
     <Compile Include="ViewModel\MainViewModel.cs" />
+    <Compile Include="ViewModel\PasswordInputViewModel.cs" />
     <Compile Include="ViewModel\ViewModelLocator.cs" />
     <Compile Include="Views\ErrorLogView.xaml.cs">
       <DependentUpon>ErrorLogView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\PasswordInput.xaml.cs">
+      <DependentUpon>PasswordInput.xaml</DependentUpon>
     </Compile>
     <None Include="CustomError.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
@@ -190,6 +194,10 @@
     <None Include="IO.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <Page Include="Views\PasswordInput.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Resource Include="Images\TrayIcons\Logo.png" />
     <Resource Include="Images\TrayIcons\Logo.ico">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>

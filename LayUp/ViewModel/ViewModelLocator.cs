@@ -45,7 +45,8 @@ namespace LayUp.ViewModel
 
             SimpleIoc.Default.Register<MainViewModel>();
             SimpleIoc.Default.Register<ViewModelLocator>();
-            
+            SimpleIoc.Default.Register<PasswordInputViewModel>();
+
         }
 
         public MainViewModel Main
@@ -55,7 +56,15 @@ namespace LayUp.ViewModel
                 return ServiceLocator.Current.GetInstance<MainViewModel>();
             }
         }
-       
+
+        public PasswordInputViewModel PassWordInput
+        {
+            get
+            {
+                return ServiceLocator.Current.GetInstance<PasswordInputViewModel>();
+            }
+        }
+
 
         public static void Cleanup()
         {

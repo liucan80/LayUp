@@ -22,6 +22,7 @@ using System.Data.SQLite;
 using System.Threading.Tasks;
 using System.Timers;
 using System.Threading;
+using LayUp.Views;
 
 namespace LayUp.ViewModel
 {
@@ -167,10 +168,26 @@ namespace LayUp.ViewModel
         public ICommand QueryCommand { get; set; }
         public ICommand AllowQueryCommand { get; set; }
         public ICommand ClearDateLogCommand { get; set; }
+        public ICommand ShowWindow { get; set; }
         DataAccess dataAccess = new DataAccess();
+        PasswordInput passwordInput;
         public MainViewModel()
         {
+           
+            Messenger.Default.Register<string>(this, "Message", msg =>
+            {
+                if (msg=="6666")
+                {
+                    dataAccess.ClearRecords();
+                    EasyModbus.StoreLogData.Instance.Store("ClearErrorLog", DateTime.Now);
+                    passwordInput.Close();
+                }
+                else
+                {
+                    passwordInput.Close();
+                }
 
+            });
             CurrentLog = dataAccess.GetAllRecords();
             ConnectCommand = new RelayCommand<bool>(Connect, (bool CanExcute)=> { return !_layupPLC.IsConnected; });
             SwitchOutputCommand = new RelayCommand<string>(SwitchDelay);
@@ -179,7 +196,7 @@ namespace LayUp.ViewModel
             ShowViewCommand = new RelayCommand<string>(ShowViewCommandExecute);
             SwitchLangugeCommand = new RelayCommand<string>(SwitchLanguage);
             WriteDataCommand = new RelayCommand<object>(WriteData);
-            WriteRadomDataCommand = new RelayCommand<List<string>>(WriteRadomData);
+            WriteRadomDataCommand = new RelayCommand(WriteRadomData);
             ReadRadomDataCommand = new RelayCommand(ReadRadomData);
             ChangeConnectionTypeCommand = new RelayCommand<string>(ChangeConnectionType);
             ButtonDownCommand = new RelayCommand<string>(OnButtonDown);
@@ -188,18 +205,20 @@ namespace LayUp.ViewModel
             SetAutoConnectCommand = new RelayCommand<bool>(setAutoConnect);
             ResetErrorCommand = new RelayCommand<bool>(ResetError, (bool CanExcute)=> { return ErrorHappened; });
             ResetPLCCommand = new RelayCommand<bool>(ResetPLC, (bool CanExcute) => { return _layupPLC.SM[0]; });
-            //Func<bool> p = (bool CanExcute) => { return CurrentLog.Count == 0; };
             ClearErrorLogCommand = new RelayCommand<bool>(ClearErrorLog, (bool CanExcute) => {return CurrentLog.Count == 0 ? false : true; });
             QueryCommand = new RelayCommand(QueryErrorLog);
             AllowQueryCommand = new RelayCommand(AllowQuery);
-            ClearDateLogCommand = new RelayCommand(dataAccess.ClearRecords);
+            ClearDateLogCommand = new RelayCommand(ClearRecords);
 
 
             _layupPLC = new Fx3GA(){ ConnectionMethod="ModbusTCP" };
+
+            //载入配置文件
             ConfigHandler.LoadConfig(ref config);
             _layupPLC.IpAddress = config.Address;
             _layupPLC.Port = config.Port;
-            AutoConnect = config.AutoConnect;        
+            AutoConnect = config.AutoConnect;    
+            //载入错误定义文件
             using (StreamReader sr = new StreamReader("CustomError.txt"))
             {
                 string line;
@@ -218,29 +237,34 @@ namespace LayUp.ViewModel
            
             //初始化定时器，定时读取PLC状态
             DispatcherTimer1 = new DispatcherTimer();
-            DispatcherTimer2 = new DispatcherTimer { Interval = new System.TimeSpan(0, 0, 1) };
-            DispatcherTimer2.Tick += DispatcherTimer2_Tick;
-            DispatcherTimer2.Start();
             DispatcherTimer1.Interval = new System.TimeSpan(0,0,1);
-            //DispatcherTimer1.Interval = 1000;
             DispatcherTimer1.Tick += GetOutputStatus;
             DispatcherTimer1.Tick += GetInputStatus;
             DispatcherTimer1.Tick += GetDataStatus;
             DispatcherTimer1.Tick += GetMStatus;
             DispatcherTimer1.Tick += GetSpecialDataStatus;
             DispatcherTimer1.Tick += GetSpecialMStatus;
-            
-            if (Utils.PingHost(_layupPLC.IpAddress))
+            //初始化定时器，读取记录数据库
+            DispatcherTimer2 = new DispatcherTimer { Interval = new System.TimeSpan(0, 0, 1) };
+            DispatcherTimer2.Tick += DispatcherTimer2_Tick;
+            DispatcherTimer2.Start();
+            //如果配置是自动连接PLC 则软件开启后就连接PLC
+            if (AutoConnect)
             {
-                if (AutoConnect)
-                {
-                    Connect(_layupPLC.IsConnected);
-                }
-
+                Connect(_layupPLC.IsConnected);
+                
             }
             EasyModbus.StoreLogData.Instance.Store("Open HMI", DateTime.Now);
 
         }
+
+        private void ClearRecords()
+        {
+
+            passwordInput = new PasswordInput { WindowStartupLocation=WindowStartupLocation.CenterScreen};
+            passwordInput.ShowDialog();
+            
+        } 
 
         private void DispatcherTimer2_Tick(object sender, EventArgs e)
         {
@@ -295,6 +319,7 @@ namespace LayUp.ViewModel
 
         private void ClearErrorLog(bool obj)
         {
+            //System.Windows.Forms.MessageBox.Show("Test");
             CurrentLog.Clear();
         }
 
@@ -375,7 +400,9 @@ namespace LayUp.ViewModel
                             ModbusClient1.Connect();
                             DispatcherTimer1.Start();
                             _layupPLC.IsConnected = true;
+                            //读取界面需要的参数
                             ReadRadomData();
+                            //记录连接信息
                             EasyModbus.StoreLogData.Instance.Store("PLC Connected for Modbus-TCP,IPAddress: " + _layupPLC.IpAddress + ", Port: " + _layupPLC.Port, DateTime.Now);
                         }
                         catch (Exception e)
@@ -431,12 +458,16 @@ namespace LayUp.ViewModel
                 if (MState[0])
                 {
                     ModbusClient1.WriteSingleCoil(MRelayAddress, false);
+                    EasyModbus.StoreLogData.Instance.Store("Switch Delay \t" + str +"\tFalse", DateTime.Now);
+
                 }
                 else
                 {
                     ModbusClient1.WriteSingleCoil(MRelayAddress, true);
+                    EasyModbus.StoreLogData.Instance.Store("Switch Delay \t" + str+"\tTrue", DateTime.Now);
+
                 }
-                
+
             }
             catch (Exception)
             {
@@ -590,8 +621,19 @@ namespace LayUp.ViewModel
             }
         }
         //写入随机D寄存器
-        private void WriteRadomData(List<string> parameter)
+        private void WriteRadomData()
         {
+            string str = $"D150={ _layupPLC.Data[150]}\t";
+            str = str + $"D200={ _layupPLC.Data[200]}\t";
+            str = str + $"D234={ _layupPLC.Data[234]}\t";
+            str = str + $"D232={ _layupPLC.Data[232]}\t";
+            str = str + $"D170={ _layupPLC.Data[170]}\t";
+            str = str + $"D172={ _layupPLC.Data[172]}\t";
+            str = str + $"D174={ _layupPLC.Data[174]}\t";
+            str = str + $"D176={ _layupPLC.Data[176]}\t";
+            str = str + $"D196={ _layupPLC.Data[196]}\t";
+            str = str + $"D198={ _layupPLC.Data[198]}\t";
+
             ModbusClient1.WriteSingleRegister(150, _layupPLC.Data[150]);
             ModbusClient1.WriteSingleRegister(200, _layupPLC.Data[200]);
             ModbusClient1.WriteSingleRegister(234, _layupPLC.Data[234]);
@@ -602,6 +644,7 @@ namespace LayUp.ViewModel
             ModbusClient1.WriteSingleRegister(176, _layupPLC.Data[176]);
             ModbusClient1.WriteSingleRegister(196, _layupPLC.Data[196]);
             ModbusClient1.WriteSingleRegister(198, _layupPLC.Data[198]);
+            EasyModbus.StoreLogData.Instance.Store("Write Parameters\t"+str, DateTime.Now);
 
 
         }
@@ -706,7 +749,7 @@ namespace LayUp.ViewModel
                 }
                 if (er.Count>0)
                 {
-                    ErrorCode = er.Last().ErrorRegister + er.Last().ErrorDescription;
+                    ErrorCode = er.Last().ErrorRegister +"\t"+ er.Last().ErrorDescription;
 
                 }
 
@@ -726,12 +769,19 @@ namespace LayUp.ViewModel
             bool[] errorRegister = new bool[100];
 
             ModbusClient1.WriteMultipleCoils(9192, errorRegister);
+            EasyModbus.StoreLogData.Instance.Store("Reset Error", DateTime.Now);
+
         }
 
         internal static void OnWindowsClosing(object sender, CancelEventArgs e)
         {
             EasyModbus.StoreLogData.Instance.Store("Close HMI", DateTime.Now);
 
+        }
+
+        public static implicit operator Window(MainViewModel v)
+        {
+            throw new NotImplementedException();
         }
     }
     public class DataAccess

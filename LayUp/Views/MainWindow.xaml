@@ -1104,7 +1104,7 @@
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="40"/>
-                                <RowDefinition Height="550"/>
+                                <RowDefinition Height="580"/>
                                 <RowDefinition/>
                             </Grid.RowDefinitions>
                             <DockPanel>
@@ -1139,7 +1139,7 @@
                                     </GridView>
                                     </ListView.View>
                                 </ListView>
-                            <Button Grid.Row="2" Content="清空记录" Width="120" Command="{Binding ClearDateLogCommand}" VerticalAlignment="Center"  />
+                            <Button Grid.Row="2" Content="清空记录" Width="120"  Command="{Binding ClearDateLogCommand}" VerticalAlignment="Center" Margin="884,5,20,5"  />
                         </Grid>
                     </TabItem>
                     
