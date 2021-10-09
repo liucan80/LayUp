@@ -11,7 +11,6 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Threading;
 
-
 namespace LayUp.Views
 {
     /// <summary>
@@ -25,7 +24,7 @@ namespace LayUp.Views
         {
             InitializeComponent();
 
-            //  Messenger.Default.Register<NotificationMessage>(this, NotificationMessageReceived);
+             Messenger.Default.Register<string>(this ,"Notify", msg => { CloseNotifyIcon(); });
             //初始化定时器，显示当前时间
             DispatcherTimer2 = new DispatcherTimer { Interval = new TimeSpan(0,0,1)};
             //DispatcherTimer2.Interval = new System.TimeSpan(500);
@@ -37,7 +36,12 @@ namespace LayUp.Views
            // txtAssemblyVersion.DataContext = new CurrentTimeViewModel();
         }
 
-     
+        
+        //由于关闭程序时 NotifyIcon不会关闭 所以关闭程序时销毁myNotifyIcon对象
+        private void  CloseNotifyIcon()
+        {
+            myNotifyIcon.Dispose();
+        }
 
         private void GetCurrentTime(object sender, EventArgs e)
         {

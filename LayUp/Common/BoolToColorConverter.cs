@@ -17,11 +17,11 @@ namespace LayUp.Common
 
           if ((bool)value)
             {
-                return "green";
+                return "#00FF00";
             }
             else
             {
-                return "#C5611B";
+                return "#F5DEB3";
             }
           
         }

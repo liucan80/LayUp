@@ -46,6 +46,7 @@ namespace LayUp.ViewModel
         /// 
         
         EasyModbus.ModbusClient ModbusClient1;
+        
         protected static Config config;
         private Fx3GA _layupPLC = new Fx3GA();
         public Fx3GA LayupPLC
@@ -189,23 +190,23 @@ namespace LayUp.ViewModel
 
             });
             CurrentLog = dataAccess.GetAllRecords();
-            ConnectCommand = new RelayCommand<bool>(Connect, (bool CanExcute)=> { return !_layupPLC.IsConnected; });
+            ConnectCommand = new RelayCommand(Connect, ()=> { return !_layupPLC.IsConnected; });
             SwitchOutputCommand = new RelayCommand<string>(SwitchDelay);
          //   StopMonitorCommand = new RelayCommand<bool>(CloseConnection, CanStopMonitorExcute);
-            StopMonitorCommand = new RelayCommand<bool>(CloseConnection, (bool CanExcute) =>{ return _layupPLC.IsConnected; });
+            StopMonitorCommand = new RelayCommand(CloseConnection, () =>{ return _layupPLC.IsConnected; });
             ShowViewCommand = new RelayCommand<string>(ShowViewCommandExecute);
             SwitchLangugeCommand = new RelayCommand<string>(SwitchLanguage);
             WriteDataCommand = new RelayCommand<object>(WriteData);
-            WriteRadomDataCommand = new RelayCommand(WriteRadomData);
+            WriteRadomDataCommand = new RelayCommand(WriteRadomData,()=> { return _layupPLC.IsConnected; });
             ReadRadomDataCommand = new RelayCommand(ReadRadomData);
             ChangeConnectionTypeCommand = new RelayCommand<string>(ChangeConnectionType);
             ButtonDownCommand = new RelayCommand<string>(OnButtonDown);
-            ButtonUpCommand = new RelayCommand<string>(OnButtonUp);
+            ButtonUpCommand = new RelayCommand<string>(OnButtonUp   );
             SetAutoRunCommand = new RelayCommand<bool>(setAutoRun);
             SetAutoConnectCommand = new RelayCommand<bool>(setAutoConnect);
-            ResetErrorCommand = new RelayCommand<bool>(ResetError, (bool CanExcute)=> { return ErrorHappened; });
-            ResetPLCCommand = new RelayCommand<bool>(ResetPLC, (bool CanExcute) => { return _layupPLC.SM[0]; });
-            ClearErrorLogCommand = new RelayCommand<bool>(ClearErrorLog, (bool CanExcute) => {return CurrentLog.Count == 0 ? false : true; });
+            ResetErrorCommand = new RelayCommand(ResetError, ()=> { return ErrorHappened; });
+            ResetPLCCommand = new RelayCommand(ResetPLC, () => { return _layupPLC.SM[0]; });
+            ClearErrorLogCommand = new RelayCommand(ClearErrorLog, () => {return CurrentLog.Count == 0 ? false : true; });
             QueryCommand = new RelayCommand(QueryErrorLog);
             AllowQueryCommand = new RelayCommand(AllowQuery);
             ClearDateLogCommand = new RelayCommand(ClearRecords);
@@ -251,7 +252,7 @@ namespace LayUp.ViewModel
             //如果配置是自动连接PLC 则软件开启后就连接PLC
             if (AutoConnect)
             {
-                Connect(_layupPLC.IsConnected);
+                Connect();
                 
             }
             EasyModbus.StoreLogData.Instance.Store("Open HMI", DateTime.Now);
@@ -317,13 +318,13 @@ namespace LayUp.ViewModel
             CurrentLog = dataAccess.GetRecords(sql, param);
         }
 
-        private void ClearErrorLog(bool obj)
+        private void ClearErrorLog()
         {
             //System.Windows.Forms.MessageBox.Show("Test");
             CurrentLog.Clear();
         }
 
-        private void ResetPLC(bool obj)
+        private void ResetPLC()
         {
             //将SM50置位，
             ModbusClient1.WriteSingleCoil(20480, true);//UNDONE(需要测试是否可以清除错误)
@@ -375,7 +376,7 @@ namespace LayUp.ViewModel
         }
 
         //打开连接
-        private void Connect(bool isConnected)
+        private void Connect()
         {
             //设置站号
 
@@ -431,7 +432,7 @@ namespace LayUp.ViewModel
         }
 
         //关闭连接
-        private void CloseConnection(bool isConnected)
+        private void CloseConnection()
         {
             DispatcherTimer1.Stop();
             switch (_layupPLC.ConnectionMethod)
@@ -764,7 +765,7 @@ namespace LayUp.ViewModel
 
         }
 
-        private void ResetError(bool errorHappened)
+        private void ResetError()
         {
             bool[] errorRegister = new bool[100];
 
@@ -775,6 +776,7 @@ namespace LayUp.ViewModel
 
         internal static void OnWindowsClosing(object sender, CancelEventArgs e)
         {
+            Messenger.Default.Send<string>("Close", "Notify");
             EasyModbus.StoreLogData.Instance.Store("Close HMI", DateTime.Now);
 
         }
