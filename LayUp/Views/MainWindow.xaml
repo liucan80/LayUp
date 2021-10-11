@@ -1148,24 +1148,15 @@
                                             <Button Content="下层电机+" Width="100"  IsEnabled="{Binding LayupPLC.IsConnected}">
                                                 <i:Interaction.Triggers>
                                                     <i:EventTrigger EventName="PreviewMouseLeftButtonDown">
-                                                        <i:InvokeCommandAction Command="{Binding  ButtonDownCommand}" CommandParameter="M63"/>
+                                                        <i:InvokeCommandAction Command="{Binding  ButtonDownCommand}" CommandParameter="M77"/>
                                                     </i:EventTrigger>
                                                     <i:EventTrigger EventName="PreviewMouseLeftButtonUp">
-                                                        <i:InvokeCommandAction Command="{Binding ButtonUpCommand}" CommandParameter="M63"/>
+                                                        <i:InvokeCommandAction Command="{Binding ButtonUpCommand}" CommandParameter="M77"/>
                                                     </i:EventTrigger>
                                                 </i:Interaction.Triggers>
                                             </Button>
                                             <Separator Opacity="0" Width="5"/>
-                                            <Button Content="下层电机-" IsEnabled="{Binding LayupPLC.IsConnected}">
-                                                <i:Interaction.Triggers>
-                                                    <i:EventTrigger EventName="PreviewMouseLeftButtonDown">
-                                                        <i:InvokeCommandAction Command="{Binding  ButtonDownCommand}" CommandParameter="M64"/>
-                                                    </i:EventTrigger>
-                                                    <i:EventTrigger EventName="PreviewMouseLeftButtonUp">
-                                                        <i:InvokeCommandAction Command="{Binding ButtonUpCommand}" CommandParameter="M64"/>
-                                                    </i:EventTrigger>
-                                                </i:Interaction.Triggers>
-                                            </Button>
+                                            
                                         </DockPanel>
                                     </StackPanel>
 
