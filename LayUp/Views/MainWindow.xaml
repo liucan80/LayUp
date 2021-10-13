@@ -1191,50 +1191,50 @@
                                         <StackPanel Margin="5">
                                             <DockPanel>
                                                 <TextBlock Text="进玻璃到位延时" Grid.Row="0" VerticalAlignment="Center" />
-                                                <TextBox x:Name="txtData150" Text="{Binding LayupPLC.Data[150]}" IsEnabled="{Binding LayupPLC.IsConnected}" HorizontalAlignment="Right" Height="30" MinWidth="80"/>
+                                                <TextBox x:Name="txtData150" Text="{Binding LayupPLC.Data[150],UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding LayupPLC.IsConnected}" HorizontalAlignment="Right" Height="30" MinWidth="80"/>
                                             </DockPanel>
                                             <DockPanel>
                                                 <TextBlock Text="定位台玻璃到位延时" Grid.Row="6" VerticalAlignment="Center" />
-                                                <TextBox  x:Name="txtData200" Text="{Binding LayupPLC.Data[200]}" IsEnabled="{Binding LayupPLC.IsConnected}"  HorizontalAlignment="Right"  Height="30" MinWidth="80"/>
+                                                <TextBox  x:Name="txtData200" Text="{Binding LayupPLC.Data[200],UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding LayupPLC.IsConnected}"  HorizontalAlignment="Right"  Height="30" MinWidth="80"/>
                                             </DockPanel>
                                             <DockPanel>
                                                 <TextBlock Text="玻璃夹紧长度补偿" Grid.Row="6" VerticalAlignment="Center" />
                                                 <TextBlock Text="(mm)" Grid.Row="6" VerticalAlignment="Center" />
-                                                <TextBox   Text="{Binding LayupPLC.Data[234]}" IsEnabled="{Binding LayupPLC.IsConnected}"  HorizontalAlignment="Right"  Height="30" MinWidth="80"/>
+                                                <TextBox   Text="{Binding LayupPLC.Data[234],UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding LayupPLC.IsConnected}"  HorizontalAlignment="Right"  Height="30" MinWidth="80"/>
                                             </DockPanel>
                                             <DockPanel>
                                                 <TextBlock Text="玻璃夹紧宽度补偿" Grid.Row="8" VerticalAlignment="Center" />
                                                 <TextBlock Text="(mm)" Grid.Row="6" VerticalAlignment="Center" />
-                                                <TextBox  x:Name="txtData162" Text="{Binding LayupPLC.Data[232]}" IsEnabled="{Binding LayupPLC.IsConnected}" HorizontalAlignment="Right"  Height="30" MinWidth="80"/>
+                                                <TextBox  x:Name="txtData162" Text="{Binding LayupPLC.Data[232],UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding LayupPLC.IsConnected}" HorizontalAlignment="Right"  Height="30" MinWidth="80"/>
                                             </DockPanel>
                                             <DockPanel>
                                                 <TextBlock Text="玻璃传入超时" Grid.Row="8" VerticalAlignment="Center" />
                                                 <TextBlock Text="(mm)" Grid.Row="6" VerticalAlignment="Center" />
-                                                <TextBox  x:Name="txtData170" Text="{Binding LayupPLC.Data[170]}" IsEnabled="{Binding LayupPLC.IsConnected}" HorizontalAlignment="Right"  Height="30" MinWidth="80"/>
+                                                <TextBox  x:Name="txtData170" Text="{Binding LayupPLC.Data[170],UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding LayupPLC.IsConnected}" HorizontalAlignment="Right"  Height="30" MinWidth="80"/>
                                             </DockPanel>
                                             <DockPanel>
                                                 <TextBlock Text="下层玻璃到位延时" Grid.Row="0" VerticalAlignment="Center" />
-                                                <TextBox x:Name="txtData198" Text="{Binding LayupPLC.Data[198]}" IsEnabled="{Binding LayupPLC.IsConnected}" HorizontalAlignment="Right" Height="30" MinWidth="80"/>
+                                                <TextBox x:Name="txtData198" Text="{Binding LayupPLC.Data[198],UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding LayupPLC.IsConnected}" HorizontalAlignment="Right" Height="30" MinWidth="80"/>
                                             </DockPanel>
                                             <DockPanel>
                                                 <TextBlock Text="下层玻璃传入超时" Grid.Row="8" VerticalAlignment="Center" />
                                                 <TextBlock Text="(mm)" Grid.Row="6" VerticalAlignment="Center" />
-                                                <TextBox  x:Name="txtData196" Text="{Binding LayupPLC.Data[196]}" IsEnabled="{Binding LayupPLC.IsConnected}" HorizontalAlignment="Right"  Height="30" MinWidth="80"/>
+                                                <TextBox  x:Name="txtData196" Text="{Binding LayupPLC.Data[196],UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding LayupPLC.IsConnected}" HorizontalAlignment="Right"  Height="30" MinWidth="80"/>
                                             </DockPanel>
                                             <DockPanel>
                                                 <TextBlock Text="D172" Grid.Row="8" VerticalAlignment="Center" />
                                                 <TextBlock Text="(mm)" Grid.Row="6" VerticalAlignment="Center" />
-                                                <TextBox  x:Name="txtData172" Text="{Binding LayupPLC.Data[172]}" IsEnabled="{Binding LayupPLC.IsConnected}" HorizontalAlignment="Right"  Height="30" MinWidth="80"/>
+                                                <TextBox  x:Name="txtData172" Text="{Binding LayupPLC.Data[172],UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding LayupPLC.IsConnected}" HorizontalAlignment="Right"  Height="30" MinWidth="80"/>
                                             </DockPanel>
                                             <DockPanel>
                                                 <TextBlock Text="D174" Grid.Row="8" VerticalAlignment="Center" />
                                                 <TextBlock Text="(mm)" Grid.Row="6" VerticalAlignment="Center" />
-                                                <TextBox  x:Name="txtData174" Text="{Binding LayupPLC.Data[174]}" IsEnabled="{Binding LayupPLC.IsConnected}" HorizontalAlignment="Right"  Height="30" MinWidth="80"/>
+                                                <TextBox  x:Name="txtData174" Text="{Binding LayupPLC.Data[174] ,UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding LayupPLC.IsConnected}" HorizontalAlignment="Right"  Height="30" MinWidth="80"/>
                                             </DockPanel>
                                             <DockPanel>
                                                 <TextBlock Text="D176" Grid.Row="8" VerticalAlignment="Center" />
                                                 <TextBlock Text="(mm)" Grid.Row="6" VerticalAlignment="Center" />
-                                                <TextBox  x:Name="txtData176" Text="{Binding LayupPLC.Data[176]}" IsEnabled="{Binding LayupPLC.IsConnected}" HorizontalAlignment="Right"  Height="30" MinWidth="80"/>
+                                                <TextBox  x:Name="txtData176" Text="{Binding LayupPLC.Data[176],UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding LayupPLC.IsConnected}" HorizontalAlignment="Right"  Height="30" MinWidth="80"/>
                                             </DockPanel>
                                             <Button Content="确认" Command="{Binding WriteRadomDataCommand }" Width="200" Margin="5,5,5,5"></Button>
                                             <DockPanel>
@@ -1265,7 +1265,7 @@
                                             <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="0,0" BorderBrush="LightGray" BorderThickness="1"/>
                                             <Grid  >
                                                 <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="4*"/>
+                                                    <ColumnDefinition Width="2*"/>
                                                     <ColumnDefinition/>
                                                 </Grid.ColumnDefinitions>
                                                 <Button VerticalAlignment="Center" Foreground="Black" Grid.Column="0"  >
@@ -1279,7 +1279,16 @@
                                                         </ControlTemplate>
                                                     </Button.Template>
                                                 </Button>
-                                                <Button Style="{x:Null}" Content="报警置位" Grid.Column="1" Margin="0,2,0,2" Command="{Binding ResetPLCCommand}"></Button>
+                                                <Button  Content="报警置位" IsEnabled="{Binding LayupPLC.IsConnected}" Grid.Column="1" Margin="0,2,0,2" >
+                                                    <i:Interaction.Triggers>
+                                                        <i:EventTrigger EventName="PreviewMouseLeftButtonDown">
+                                                            <i:InvokeCommandAction Command="{Binding  ButtonDownCommand}" CommandParameter="M201"/>
+                                                        </i:EventTrigger>
+                                                        <i:EventTrigger EventName="PreviewMouseLeftButtonUp">
+                                                            <i:InvokeCommandAction Command="{Binding ButtonUpCommand}" CommandParameter="M201"/>
+                                                        </i:EventTrigger>
+                                                    </i:Interaction.Triggers>
+                                                </Button>
                                             </Grid>
 
                                         </StackPanel>

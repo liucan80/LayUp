@@ -52,7 +52,8 @@ namespace LayUp.ViewModel
         public Fx3GA LayupPLC
         {
             get { return _layupPLC; }
-            set { Set(ref _layupPLC, value); }
+            //set { Set(ref _layupPLC, value); }
+            set { _layupPLC = value; }
         }
         /// <summary>
         /// 是否自动连接PLC
@@ -241,7 +242,7 @@ namespace LayUp.ViewModel
             DispatcherTimer1.Interval = new System.TimeSpan(0,0,1);
             DispatcherTimer1.Tick += GetOutputStatus;
             DispatcherTimer1.Tick += GetInputStatus;
-            DispatcherTimer1.Tick += GetDataStatus;
+          DispatcherTimer1.Tick += GetDataStatus;
             DispatcherTimer1.Tick += GetMStatus;
             DispatcherTimer1.Tick += GetSpecialDataStatus;
             DispatcherTimer1.Tick += GetSpecialMStatus;
